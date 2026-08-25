@@ -15,8 +15,8 @@
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="SignalDesk — Find the signal in the feed.">
-  <meta name="twitter:image" content="https://signaldesk.run/assets/social-card.png">
   <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://signaldesk.run/assets/social-card.png">
   <title>SignalDesk — Focused X research</title>
   <link rel="canonical" href="https://signaldesk.run/">
   <link rel="icon" href="/assets/mark.svg" type="image/svg+xml">
@@ -25,156 +25,77 @@
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
-  <div class="site-shell">
-    <header class="site-header" aria-label="Main navigation">
-      <a class="brand" href="#top" aria-label="SignalDesk home">
+  <div class="signal-field" aria-hidden="true">
+    <svg viewBox="0 0 1440 1000" preserveAspectRatio="xMidYMid slice" role="presentation">
+      <defs>
+        <linearGradient id="arc-gradient" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#4adfff"/>
+          <stop offset="0.48" stop-color="#9278ff"/>
+          <stop offset="1" stop-color="#f14fc9"/>
+        </linearGradient>
+        <pattern id="white-pixels" width="19" height="19" patternUnits="userSpaceOnUse">
+          <rect x="2" y="3" width="2.3" height="2.3" fill="#fff" opacity="0.88"/>
+          <rect x="13" y="11" width="1.4" height="1.4" fill="#fff" opacity="0.48"/>
+        </pattern>
+        <pattern id="color-pixels" width="12" height="12" patternUnits="userSpaceOnUse">
+          <rect x="1" y="1" width="6" height="6" fill="#d65df1" opacity="0.48"/>
+          <rect x="8" y="7" width="3" height="3" fill="#54dcff" opacity="0.58"/>
+        </pattern>
+        <filter id="arc-glow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="20"/>
+        </filter>
+      </defs>
+      <circle cx="1320" cy="1110" r="790" fill="none" stroke="url(#arc-gradient)" stroke-width="150" opacity="0.22" filter="url(#arc-glow)"/>
+      <circle cx="1320" cy="1110" r="790" fill="none" stroke="url(#arc-gradient)" stroke-width="116" opacity="0.9"/>
+      <circle cx="1320" cy="1110" r="790" fill="none" stroke="url(#color-pixels)" stroke-width="112" opacity="0.86"/>
+      <circle cx="1320" cy="1110" r="690" fill="none" stroke="url(#white-pixels)" stroke-width="230" opacity="0.95"/>
+      <circle cx="1320" cy="1110" r="548" fill="none" stroke="#fff" stroke-width="1" opacity="0.13"/>
+    </svg>
+  </div>
+
+  <div class="page-shell">
+    <header class="site-header">
+      <a class="brand" href="/" aria-label="SignalDesk home">
         <img src="/assets/mark.svg" width="30" height="30" alt="">
         <span>SignalDesk</span>
       </a>
-      <nav>
-        <a href="#product">Product</a>
-        <a href="#download">Download</a>
-        <a href="https://github.com/rjhllc/signaldesk" rel="noopener">GitHub</a>
-        <a class="nav-support" href="mailto:support@signaldesk.run">Support</a>
+      <nav aria-label="Main navigation">
+        <a href="https://github.com/rjhllc/signaldesk/blob/main/PRIVACY.md" rel="noopener">Privacy</a>
+        <a href="https://github.com/rjhllc/signaldesk" rel="noopener">GitHub ↗</a>
+        <a href="mailto:support@signaldesk.run">Support</a>
       </nav>
     </header>
 
-    <main id="main">
-      <section class="hero" id="top" aria-labelledby="hero-title">
-        <div class="hero-field" aria-hidden="true">
-          <svg viewBox="0 0 900 900" role="presentation">
-            <defs>
-              <linearGradient id="orbit-gradient" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0" stop-color="#48dcff"/>
-                <stop offset="0.48" stop-color="#8a76ff"/>
-                <stop offset="1" stop-color="#d35eff"/>
-              </linearGradient>
-              <radialGradient id="orbit-glow">
-                <stop offset="0.7" stop-color="#9b79ff" stop-opacity="0"/>
-                <stop offset="1" stop-color="#9b79ff" stop-opacity="0.3"/>
-              </radialGradient>
-              <pattern id="star-pattern" width="28" height="28" patternUnits="userSpaceOnUse">
-                <circle cx="3" cy="4" r="1.1" fill="#ffffff" opacity="0.56"/>
-                <circle cx="19" cy="15" r="0.7" fill="#ffffff" opacity="0.28"/>
-              </pattern>
-              <filter id="soft-glow" x="-50%" y="-50%" width="200%" height="200%">
-                <feGaussianBlur stdDeviation="16" result="blur"/>
-                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-              </filter>
-            </defs>
-            <circle cx="680" cy="160" r="470" fill="url(#orbit-glow)"/>
-            <circle cx="680" cy="160" r="440" fill="none" stroke="url(#orbit-gradient)" stroke-width="76" opacity="0.86" filter="url(#soft-glow)"/>
-            <circle cx="680" cy="160" r="388" fill="url(#star-pattern)" opacity="0.8"/>
-            <circle cx="680" cy="160" r="490" fill="none" stroke="url(#star-pattern)" stroke-width="120" opacity="0.9"/>
-          </svg>
-        </div>
-        <div class="hero-copy">
-          <p class="eyebrow"><span></span> Local-first X research</p>
-          <h1 id="hero-title">Find the signal<br>in the feed.</h1>
-          <p class="hero-intro">Search live X data, shape the results in natural language, and keep the original evidence in view.</p>
-          <div class="hero-actions">
-            <a id="primary-download" class="primary-action" href="#download" data-download-primary>
-              <span data-download-label>Choose a desktop download</span>
-              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2v11m0 0 4-4m-4 4L6 9M3 17h14"/></svg>
-            </a>
-            <a class="text-action" href="#product">See how it works <span aria-hidden="true">↘</span></a>
+    <main id="main" class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">SignalDesk // Desktop X research</p>
+        <h1>Find the signal<br><span>in the feed.</span></h1>
+        <p class="intro">Search live X data, curate results in natural language, and keep the original evidence intact. Local-first, with no telemetry.</p>
+
+        <div class="download-selector">
+          <div class="platform-tabs" role="tablist" aria-label="Choose your operating system">
+            <button type="button" role="tab" data-platform-select="windows" aria-selected="false">Windows</button>
+            <button type="button" role="tab" data-platform-select="macos" aria-selected="false">macOS</button>
+            <button type="button" role="tab" data-platform-select="linux" aria-selected="false">Linux</button>
           </div>
-          <p id="platform-note" class="platform-note" aria-live="polite">Available for Windows, macOS, and Linux.</p>
-        </div>
-        <a class="scroll-cue" href="#product" aria-label="Explore SignalDesk">
-          <span>Explore</span><i aria-hidden="true"></i>
-        </a>
-      </section>
-
-      <section class="proof-strip" aria-label="Product principles">
-        <p>Live X data</p><span></span><p>Your AI provider</p><span></span><p>Local encrypted credentials</p><span></span><p>No telemetry</p>
-      </section>
-
-      <section class="product-section" id="product" aria-labelledby="product-title">
-        <div class="section-heading">
-          <p class="eyebrow"><span></span> A research instrument</p>
-          <h2 id="product-title">Less noise.<br>More evidence.</h2>
-          <p>SignalDesk keeps collection, AI review, and proof in one focused desktop workflow.</p>
-        </div>
-        <div class="feature-grid">
-          <article class="feature feature-search">
-            <div class="feature-number">01</div>
-            <div class="feature-graphic query-graphic" aria-hidden="true">
-              <span>tokenization</span><i></i><i></i><i></i>
-            </div>
-            <h3>Search precisely</h3>
-            <p>Build exact X queries with timeframe, post type, language, media, engagement, and exclusion controls.</p>
-          </article>
-          <article class="feature feature-curate">
-            <div class="feature-number">02</div>
-            <div class="feature-graphic rank-graphic" aria-hidden="true">
-              <i><b>94</b></i><i><b>78</b></i><i><b>61</b></i>
-            </div>
-            <h3>Curate naturally</h3>
-            <p>Tell your selected model what matters, follow up when it misses, and keep every refinement in its own view.</p>
-          </article>
-          <article class="feature feature-evidence">
-            <div class="feature-number">03</div>
-            <div class="feature-graphic evidence-graphic" aria-hidden="true">
-              <span></span><span></span><span></span><b>CSV ↗</b>
-            </div>
-            <h3>Keep the proof</h3>
-            <p>Compare against untouched originals, inspect exact request details, and export the active view to CSV.</p>
-          </article>
-        </div>
-      </section>
-
-      <section class="privacy-section" aria-labelledby="privacy-title">
-        <div class="privacy-mark" aria-hidden="true"><img src="/assets/mark.svg" width="70" height="70" alt=""></div>
-        <div>
-          <p class="eyebrow"><span></span> Private by design</p>
-          <h2 id="privacy-title">Your credentials stay yours.</h2>
-          <p>SignalDesk runs locally. Credentials are encrypted for your operating-system account. Searches go directly to X, optional reviews go directly to the AI provider you choose, and nothing routes through a SignalDesk account or analytics service.</p>
-          <a class="text-action" href="https://github.com/rjhllc/signaldesk/blob/main/PRIVACY.md" rel="noopener">Read the privacy boundary <span aria-hidden="true">↗</span></a>
-        </div>
-      </section>
-
-      <section class="download-section" id="download" aria-labelledby="download-title">
-        <div class="download-orbit" aria-hidden="true"></div>
-        <div class="download-heading">
-          <p class="eyebrow"><span></span> Desktop application</p>
-          <h2 id="download-title">Start with the latest release.</h2>
-          <p>Your recommended download is selected automatically. You can always choose another platform.</p>
-        </div>
-        <div class="download-grid">
-          <a class="download-card" data-platform="windows" href="https://github.com/rjhllc/signaldesk/releases/latest/download/SignalDesk-Setup-Windows-x64.exe">
-            <span class="platform-icon" aria-hidden="true">⊞</span>
-            <strong>Windows</strong>
-            <small>x64 installer · .exe</small>
-            <i>Download <span aria-hidden="true">↓</span></i>
-          </a>
-          <a class="download-card" data-platform="macos" href="https://github.com/rjhllc/signaldesk/releases/latest/download/SignalDesk-macOS-universal.dmg">
-            <span class="platform-icon apple-icon" aria-hidden="true">●</span>
-            <strong>macOS</strong>
-            <small>Apple Silicon + Intel · .dmg</small>
-            <i>Download <span aria-hidden="true">↓</span></i>
-          </a>
-          <a class="download-card" data-platform="linux" href="https://github.com/rjhllc/signaldesk/releases/latest/download/SignalDesk-Linux-amd64.deb">
-            <span class="platform-icon linux-icon" aria-hidden="true">◆</span>
-            <strong>Linux</strong>
-            <small>AMD64 Debian package · .deb</small>
-            <i>Download <span aria-hidden="true">↓</span></i>
+          <a id="primary-download" class="download-bar" href="https://github.com/rjhllc/signaldesk/releases/latest" data-download-primary>
+            <span class="download-prompt" aria-hidden="true">↓</span>
+            <span class="download-copy"><small data-download-label>Latest release</small><strong data-download-filename>Choose a platform above</strong></span>
+            <b>Download</b>
           </a>
         </div>
-        <p class="release-link">Need release details or checksums? <a href="https://github.com/rjhllc/signaldesk/releases/latest" rel="noopener">View the latest release on GitHub ↗</a></p>
-      </section>
+
+        <div class="release-meta">
+          <p id="platform-note" aria-live="polite">Available for Windows, macOS, and Linux.</p>
+          <a href="https://github.com/rjhllc/signaldesk/releases/latest" rel="noopener">Release details ↗</a>
+        </div>
+      </div>
     </main>
 
     <footer class="site-footer">
-      <div class="footer-brand">
-        <a class="brand" href="#top"><img src="/assets/mark.svg" width="30" height="30" alt=""><span>SignalDesk</span></a>
-        <p>Focused X research.<br>Local control. Clear evidence.</p>
-      </div>
-      <div class="footer-links">
-        <div><span>Product</span><a href="#product">How it works</a><a href="#download">Downloads</a><a href="https://github.com/rjhllc/signaldesk" rel="noopener">Source code</a></div>
-        <div><span>Company</span><a href="mailto:support@signaldesk.run">support@signaldesk.run</a><a href="https://github.com/rjhllc/signaldesk/blob/main/PRIVACY.md" rel="noopener">Privacy</a><a href="https://github.com/rjhllc/signaldesk/blob/main/SECURITY.md" rel="noopener">Security</a></div>
-      </div>
-      <p class="copyright">© 2026 RJH LLC</p>
+      <div class="footer-brand"><img src="/assets/mark.svg" width="24" height="24" alt=""><span>SignalDesk</span></div>
+      <p>Focused X research · Local control · Clear evidence</p>
+      <span>RJH LLC · 2026</span>
     </footer>
   </div>
 </body>

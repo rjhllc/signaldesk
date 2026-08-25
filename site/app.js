@@ -3,14 +3,17 @@
 const RELEASES = Object.freeze({
   windows: Object.freeze({
     name: 'Windows',
+    filename: 'SignalDesk-Setup-Windows-x64.exe',
     url: 'https://github.com/rjhllc/signaldesk/releases/latest/download/SignalDesk-Setup-Windows-x64.exe',
   }),
   macos: Object.freeze({
     name: 'macOS',
+    filename: 'SignalDesk-macOS-universal.dmg',
     url: 'https://github.com/rjhllc/signaldesk/releases/latest/download/SignalDesk-macOS-universal.dmg',
   }),
   linux: Object.freeze({
     name: 'Linux',
+    filename: 'SignalDesk-Linux-amd64.deb',
     url: 'https://github.com/rjhllc/signaldesk/releases/latest/download/SignalDesk-Linux-amd64.deb',
   }),
 });
@@ -29,31 +32,49 @@ function detectedPlatform() {
   return null;
 }
 
-function configureDownloads() {
-  const platform = detectedPlatform();
-  const primary = document.querySelector('[data-download-primary]');
-  const label = document.querySelector('[data-download-label]');
-  const note = document.querySelector('#platform-note');
-  const cards = [...document.querySelectorAll('[data-platform]')];
+const primaryDownload = document.querySelector('[data-download-primary]');
+const downloadLabel = document.querySelector('[data-download-label]');
+const downloadFilename = document.querySelector('[data-download-filename]');
+const platformNote = document.querySelector('#platform-note');
+const platformTabs = [...document.querySelectorAll('[data-platform-select]')];
 
-  cards.forEach((card) => {
-    const recommended = card.dataset.platform === platform;
-    card.dataset.recommended = String(recommended);
-    if (recommended) card.setAttribute('aria-label', `${card.querySelector('strong').textContent}, recommended for this device`);
-  });
-
-  if (!platform) {
-    primary.href = '#download';
-    label.textContent = 'Choose a desktop download';
-    note.textContent = 'Choose Windows, macOS, or Linux below.';
-    return;
-  }
-
+function selectPlatform(platform, detected = false) {
   const release = RELEASES[platform];
-  primary.href = release.url;
-  label.textContent = `Download for ${release.name}`;
-  primary.setAttribute('aria-label', `Download the latest SignalDesk release for ${release.name}`);
-  note.textContent = `${release.name} detected · latest release selected automatically.`;
+  if (!release) return;
+
+  platformTabs.forEach((tab) => {
+    const selected = tab.dataset.platformSelect === platform;
+    tab.setAttribute('aria-selected', String(selected));
+    tab.tabIndex = selected ? 0 : -1;
+  });
+  primaryDownload.href = release.url;
+  primaryDownload.setAttribute('aria-label', `Download the latest SignalDesk release for ${release.name}`);
+  downloadLabel.textContent = detected ? `Recommended for ${release.name}` : `${release.name} selected`;
+  downloadFilename.textContent = release.filename;
+  platformNote.textContent = detected
+    ? `${release.name} detected · latest release selected automatically.`
+    : `Latest ${release.name} release selected manually.`;
 }
 
-configureDownloads();
+platformTabs.forEach((tab, index) => {
+  tab.addEventListener('click', () => selectPlatform(tab.dataset.platformSelect));
+  tab.addEventListener('keydown', (event) => {
+    let nextIndex = null;
+    if (event.key === 'ArrowRight') nextIndex = (index + 1) % platformTabs.length;
+    if (event.key === 'ArrowLeft') nextIndex = (index - 1 + platformTabs.length) % platformTabs.length;
+    if (event.key === 'Home') nextIndex = 0;
+    if (event.key === 'End') nextIndex = platformTabs.length - 1;
+    if (nextIndex === null) return;
+    event.preventDefault();
+    const nextTab = platformTabs[nextIndex];
+    selectPlatform(nextTab.dataset.platformSelect);
+    nextTab.focus();
+  });
+});
+
+const platform = detectedPlatform();
+if (platform) {
+  selectPlatform(platform, true);
+} else {
+  platformTabs.forEach((tab) => { tab.tabIndex = 0; });
+}
