@@ -1,12 +1,12 @@
 <p align="center">
-  <img src="assets/signaldesk-banner.svg" alt="SignalDesk — Focused X research. Local control. Clear evidence." width="100%">
+  <a href="https://signaldesk.run">
+    <img src="assets/signaldesk-banner.svg" alt="SignalDesk — Find the signal in the feed." width="100%">
+  </a>
 </p>
 
 <p align="center">
-  <strong>A local-first desktop application for focused research using live X data.</strong>
-</p>
-
-<p align="center">
+  <a href="https://signaldesk.run">Website</a>
+  ·
   <a href="https://github.com/rjhllc/signaldesk/releases/latest">Download SignalDesk</a>
   ·
   <a href="PRIVACY.md">Privacy</a>

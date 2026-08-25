@@ -1,33 +1,52 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1280" height="360" viewBox="0 0 1280 360" role="img" aria-labelledby="title description">
   <title id="title">SignalDesk</title>
-  <desc id="description">SignalDesk product banner</desc>
+  <desc id="description">Find the signal in the feed. Local-first X research.</desc>
   <defs>
-    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#171b3f"/>
-      <stop offset="0.56" stop-color="#38328f"/>
-      <stop offset="1" stop-color="#5b55d6"/>
+    <linearGradient id="signal" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#52DDFF"/>
+      <stop offset="0.5" stop-color="#947CFF"/>
+      <stop offset="1" stop-color="#D967FF"/>
     </linearGradient>
-    <linearGradient id="glow" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#9f9aff" stop-opacity="0.36"/>
-      <stop offset="1" stop-color="#6e67ea" stop-opacity="0"/>
-    </linearGradient>
-    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
-      <feDropShadow dx="0" dy="16" stdDeviation="18" flood-color="#10132d" flood-opacity="0.42"/>
+    <radialGradient id="glow">
+      <stop offset="0.58" stop-color="#947CFF" stop-opacity="0"/>
+      <stop offset="1" stop-color="#947CFF" stop-opacity="0.24"/>
+    </radialGradient>
+    <pattern id="stars" width="22" height="22" patternUnits="userSpaceOnUse">
+      <circle cx="3" cy="4" r="1" fill="#FFFFFF" opacity="0.5"/>
+      <circle cx="16" cy="14" r="0.7" fill="#FFFFFF" opacity="0.24"/>
+    </pattern>
+    <filter id="soft-glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="14"/>
+    </filter>
+    <filter id="grain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch"/>
+      <feColorMatrix type="saturate" values="0"/>
     </filter>
   </defs>
-  <rect width="1280" height="360" rx="28" fill="url(#background)"/>
-  <circle cx="1120" cy="46" r="300" fill="url(#glow)"/>
-  <circle cx="104" cy="350" r="180" fill="#7d76ee" opacity="0.1"/>
-  <g transform="translate(92 91)" filter="url(#shadow)">
-    <rect width="178" height="178" rx="46" fill="#6c65e6"/>
-    <rect x="47" y="83" width="18" height="50" rx="9" fill="#fff" opacity="0.7"/>
-    <rect x="80" y="42" width="18" height="91" rx="9" fill="#fff"/>
-    <rect x="113" y="63" width="18" height="70" rx="9" fill="#fff" opacity="0.86"/>
+
+  <rect width="1280" height="360" rx="20" fill="#07070A"/>
+  <rect width="1280" height="360" rx="20" filter="url(#grain)" opacity="0.035"/>
+  <path d="M0 92H1280" stroke="#FFFFFF" opacity="0.1"/>
+
+  <circle cx="1160" cy="-76" r="380" fill="url(#glow)"/>
+  <circle cx="1160" cy="-76" r="326" fill="none" stroke="url(#signal)" stroke-width="64" opacity="0.28" filter="url(#soft-glow)"/>
+  <circle cx="1160" cy="-76" r="326" fill="none" stroke="url(#signal)" stroke-width="48" opacity="0.9"/>
+  <circle cx="1160" cy="-76" r="286" fill="url(#stars)"/>
+  <circle cx="1160" cy="-76" r="372" fill="none" stroke="url(#stars)" stroke-width="92" opacity="0.88"/>
+
+  <g transform="translate(58 20)">
+    <path d="M12 25 5 32l7 7M52 25l7 7-7 7" fill="none" stroke="url(#signal)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.72"/>
+    <rect x="17" y="25" width="6" height="19" rx="3" fill="url(#signal)" opacity="0.72"/>
+    <rect x="29" y="12" width="6" height="32" rx="3" fill="url(#signal)"/>
+    <rect x="41" y="19" width="6" height="25" rx="3" fill="url(#signal)" opacity="0.88"/>
   </g>
-  <g fill="#fff" font-family="Segoe UI, Inter, Arial, sans-serif">
-    <text x="324" y="164" font-size="72" font-weight="750" letter-spacing="-2">SignalDesk</text>
-    <text x="328" y="215" font-size="24" font-weight="500" opacity="0.82">Focused X research. Local control. Clear evidence.</text>
-    <rect x="328" y="252" width="396" height="1" fill="#fff" opacity="0.24"/>
-    <text x="328" y="291" font-size="16" font-weight="600" letter-spacing="2" opacity="0.66">WINDOWS DESKTOP RESEARCH</text>
+  <text x="127" y="60" fill="#F6F5F8" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="30" font-weight="700" letter-spacing="-1">SignalDesk</text>
+  <text x="1120" y="57" fill="#A5A2AD" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="11" font-weight="700" letter-spacing="1.4" text-anchor="end">SIGNALDESK.RUN</text>
+
+  <g transform="translate(64 156)">
+    <path d="M0 0H28" stroke="url(#signal)"/>
+    <text x="42" y="4" fill="#A5A2AD" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="11" font-weight="700" letter-spacing="2">LOCAL-FIRST X RESEARCH</text>
+    <text x="0" y="81" fill="#F6F5F8" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="66" font-weight="590" letter-spacing="-3.6">Find the signal in the feed.</text>
+    <text x="2" y="125" fill="#918E99" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="16">Search precisely · Curate naturally · Keep the proof</text>
   </g>
 </svg>
