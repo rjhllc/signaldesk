@@ -1,52 +1,41 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1280" height="360" viewBox="0 0 1280 360" role="img" aria-labelledby="title description">
   <title id="title">SignalDesk</title>
-  <desc id="description">Find the signal in the feed. Local-first X research.</desc>
+  <desc id="description">Find the signal.</desc>
   <defs>
-    <linearGradient id="signal" x1="0" y1="0" x2="1" y2="1">
+    <linearGradient id="arc" x1="0" y1="0" x2="1" y2="1">
       <stop stop-color="#52DDFF"/>
       <stop offset="0.5" stop-color="#947CFF"/>
-      <stop offset="1" stop-color="#D967FF"/>
+      <stop offset="1" stop-color="#E957D7"/>
     </linearGradient>
-    <radialGradient id="glow">
-      <stop offset="0.58" stop-color="#947CFF" stop-opacity="0"/>
-      <stop offset="1" stop-color="#947CFF" stop-opacity="0.24"/>
-    </radialGradient>
-    <pattern id="stars" width="22" height="22" patternUnits="userSpaceOnUse">
-      <circle cx="3" cy="4" r="1" fill="#FFFFFF" opacity="0.5"/>
-      <circle cx="16" cy="14" r="0.7" fill="#FFFFFF" opacity="0.24"/>
+    <linearGradient id="app-icon" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#726BEA"/>
+      <stop offset="0.52" stop-color="#5B55D6"/>
+      <stop offset="1" stop-color="#413BA9"/>
+    </linearGradient>
+    <pattern id="pixels" width="19" height="19" patternUnits="userSpaceOnUse">
+      <rect x="2" y="3" width="2.2" height="2.2" fill="#FFFFFF" opacity="0.52"/>
+      <rect x="13" y="11" width="1.3" height="1.3" fill="#FFFFFF" opacity="0.24"/>
     </pattern>
-    <filter id="soft-glow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="14"/>
-    </filter>
     <filter id="grain" x="0" y="0" width="100%" height="100%">
-      <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.82" numOctaves="3" stitchTiles="stitch"/>
       <feColorMatrix type="saturate" values="0"/>
     </filter>
   </defs>
 
   <rect width="1280" height="360" rx="20" fill="#07070A"/>
   <rect width="1280" height="360" rx="20" filter="url(#grain)" opacity="0.035"/>
-  <path d="M0 92H1280" stroke="#FFFFFF" opacity="0.1"/>
 
-  <circle cx="1160" cy="-76" r="380" fill="url(#glow)"/>
-  <circle cx="1160" cy="-76" r="326" fill="none" stroke="url(#signal)" stroke-width="64" opacity="0.28" filter="url(#soft-glow)"/>
-  <circle cx="1160" cy="-76" r="326" fill="none" stroke="url(#signal)" stroke-width="48" opacity="0.9"/>
-  <circle cx="1160" cy="-76" r="286" fill="url(#stars)"/>
-  <circle cx="1160" cy="-76" r="372" fill="none" stroke="url(#stars)" stroke-width="92" opacity="0.88"/>
+  <circle cx="1150" cy="-80" r="340" fill="none" stroke="url(#arc)" stroke-width="56" opacity="0.9"/>
+  <circle cx="1150" cy="-80" r="390" fill="none" stroke="url(#pixels)" stroke-width="105" opacity="0.9"/>
+  <circle cx="1150" cy="-80" r="292" fill="url(#pixels)" opacity="0.68"/>
 
-  <g transform="translate(58 20)">
-    <path d="M12 25 5 32l7 7M52 25l7 7-7 7" fill="none" stroke="url(#signal)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.72"/>
-    <rect x="17" y="25" width="6" height="19" rx="3" fill="url(#signal)" opacity="0.72"/>
-    <rect x="29" y="12" width="6" height="32" rx="3" fill="url(#signal)"/>
-    <rect x="41" y="19" width="6" height="25" rx="3" fill="url(#signal)" opacity="0.88"/>
+  <g transform="translate(68 56)">
+    <rect width="64" height="64" rx="16" fill="url(#app-icon)"/>
+    <rect x="17" y="32" width="8" height="18" rx="4" fill="#FFFFFF" opacity="0.72"/>
+    <rect x="28" y="15" width="8" height="35" rx="4" fill="#FFFFFF"/>
+    <rect x="39" y="24" width="8" height="26" rx="4" fill="#FFFFFF" opacity="0.86"/>
   </g>
-  <text x="127" y="60" fill="#F6F5F8" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="30" font-weight="700" letter-spacing="-1">SignalDesk</text>
-  <text x="1120" y="57" fill="#A5A2AD" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="11" font-weight="700" letter-spacing="1.4" text-anchor="end">SIGNALDESK.RUN</text>
+  <text x="153" y="102" fill="#F6F5F8" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="44" font-weight="700" letter-spacing="-1.8">SignalDesk</text>
 
-  <g transform="translate(64 156)">
-    <path d="M0 0H28" stroke="url(#signal)"/>
-    <text x="42" y="4" fill="#A5A2AD" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="11" font-weight="700" letter-spacing="2">LOCAL-FIRST X RESEARCH</text>
-    <text x="0" y="81" fill="#F6F5F8" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="66" font-weight="590" letter-spacing="-3.6">Find the signal in the feed.</text>
-    <text x="2" y="125" fill="#918E99" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="16">Search precisely · Curate naturally · Keep the proof</text>
-  </g>
+  <text x="68" y="274" fill="#F6F5F8" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="82" font-weight="580" letter-spacing="-4.5">Find the signal.</text>
 </svg>

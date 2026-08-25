@@ -5,6 +5,9 @@
     <linearGradient id="orbit" x1="0" y1="0" x2="1" y2="1">
       <stop stop-color="#52DDFF"/><stop offset=".5" stop-color="#947CFF"/><stop offset="1" stop-color="#D967FF"/>
     </linearGradient>
+    <linearGradient id="app-icon" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#726BEA"/><stop offset=".52" stop-color="#5B55D6"/><stop offset="1" stop-color="#413BA9"/>
+    </linearGradient>
     <radialGradient id="glow"><stop offset=".55" stop-color="#947CFF" stop-opacity="0"/><stop offset="1" stop-color="#947CFF" stop-opacity=".24"/></radialGradient>
     <pattern id="stars" width="22" height="22" patternUnits="userSpaceOnUse"><circle cx="3" cy="4" r="1" fill="#fff" opacity=".54"/><circle cx="16" cy="14" r=".7" fill="#fff" opacity=".25"/></pattern>
     <filter id="blur"><feGaussianBlur stdDeviation="14"/></filter>
@@ -15,13 +18,14 @@
   <circle cx="1060" cy="-40" r="390" fill="none" stroke="url(#orbit)" stroke-width="54" opacity=".9"/>
   <circle cx="1060" cy="-40" r="345" fill="url(#stars)"/>
   <circle cx="1060" cy="-40" r="445" fill="none" stroke="url(#stars)" stroke-width="110"/>
-  <g transform="translate(72 70)">
-    <path d="M12 25 5 32l7 7M52 25l7 7-7 7" fill="none" stroke="url(#orbit)" stroke-width="2.5" stroke-linecap="round" opacity=".72"/>
-    <rect x="17" y="25" width="6" height="19" rx="3" fill="url(#orbit)" opacity=".72"/><rect x="29" y="12" width="6" height="32" rx="3" fill="url(#orbit)"/><rect x="41" y="19" width="6" height="25" rx="3" fill="url(#orbit)" opacity=".88"/>
+  <g transform="translate(74 70)">
+    <rect width="50" height="50" rx="12" fill="url(#app-icon)"/>
+    <rect x="13" y="25" width="6" height="14" rx="3" fill="#fff" opacity=".72"/>
+    <rect x="22" y="12" width="6" height="27" rx="3" fill="#fff"/>
+    <rect x="31" y="19" width="6" height="20" rx="3" fill="#fff" opacity=".86"/>
   </g>
-  <text x="145" y="111" fill="#F6F5F8" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="34" font-weight="700" letter-spacing="-1">SignalDesk</text>
+  <text x="142" y="107" fill="#F6F5F8" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="34" font-weight="700" letter-spacing="-1">SignalDesk</text>
   <text x="74" y="364" fill="#F6F5F8" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="84" font-weight="580" letter-spacing="-5">Find the signal</text>
   <text x="74" y="449" fill="#F6F5F8" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="84" font-weight="580" letter-spacing="-5">in the feed.</text>
-  <text x="78" y="529" fill="#97939F" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="22">Focused X research · Local control · Clear evidence</text>
   <rect x="74" y="576" width="1052" height="1" fill="#fff" opacity=".12"/>
 </svg>
