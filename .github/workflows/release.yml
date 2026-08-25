@@ -1,0 +1,279 @@
+name: Release SignalDesk
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: signaldesk-release
+  cancel-in-progress: false
+
+env:
+  PYINSTALLER_VERSION: '6.22.2'
+  UPDATE_REPOSITORY: rjhllc/signaldesk-updates
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v5
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Install locked dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Verify release tag matches package version
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          test "v$version" = "${{ github.ref_name }}"
+
+      - name: Run complete contract suite
+        run: bun run test
+
+  prepare-release:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v5
+
+      - name: Create polished release page
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          if gh release view "${{ github.ref_name }}" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            gh release edit "${{ github.ref_name }}" \
+              --repo "${{ github.repository }}" \
+              --title "SignalDesk Alpha 1" \
+              --notes-file ".github/RELEASE_NOTES.md" \
+              --latest
+          else
+            gh release create "${{ github.ref_name }}" \
+              --repo "${{ github.repository }}" \
+              --target main \
+              --title "SignalDesk Alpha 1" \
+              --notes-file ".github/RELEASE_NOTES.md" \
+              --latest
+          fi
+
+  build-windows:
+    needs: prepare-release
+    runs-on: windows-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v5
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Install locked dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build and publish standard Windows installer
+        env:
+          GH_TOKEN: ${{ secrets.UPDATES_TOKEN }}
+          SIGNALDESK_GITHUB_REPOSITORY: ${{ env.UPDATE_REPOSITORY }}
+          CSC_LINK: ${{ secrets.WINDOWS_CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_CSC_KEY_PASSWORD }}
+        run: bun run release:windows
+
+      - name: Verify Windows executable icon
+        shell: pwsh
+        run: |
+          Add-Type -AssemblyName System.Drawing
+          $installer = (Resolve-Path "release/SignalDesk-Setup-Windows-x64.exe").Path
+          $icon = [System.Drawing.Icon]::ExtractAssociatedIcon($installer)
+          if ($null -eq $icon -or $icon.Width -lt 16 -or $icon.Height -lt 16) {
+            throw "Windows installer icon is missing"
+          }
+
+      - name: Publish Windows installer
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "${{ github.ref_name }}" "release/SignalDesk-Setup-Windows-x64.exe" --repo "${{ github.repository }}" --clobber
+
+      - name: Preserve Windows CI artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: SignalDesk-${{ github.ref_name }}-Windows-x64
+          path: release/*
+          if-no-files-found: error
+
+  build-macos-backend:
+    needs: validate
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            arch: arm64
+          - runner: macos-15-intel
+            arch: x64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Build standalone local backend
+        run: |
+          python -m pip install "pyinstaller==$PYINSTALLER_VERSION"
+          python -m PyInstaller --clean --noconfirm --onefile --name signaldesk-backend backend.py
+          chmod +x dist/signaldesk-backend
+
+      - name: Preserve backend architecture
+        uses: actions/upload-artifact@v7
+        with:
+          name: signaldesk-backend-macos-${{ matrix.arch }}
+          path: dist/signaldesk-backend
+          if-no-files-found: error
+
+  build-macos:
+    needs:
+      - prepare-release
+      - build-macos-backend
+    runs-on: macos-15
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v5
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Install locked dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Download Apple Silicon backend
+        uses: actions/download-artifact@v8
+        with:
+          name: signaldesk-backend-macos-arm64
+          path: .build/backend/arm64
+
+      - name: Download Intel backend
+        uses: actions/download-artifact@v8
+        with:
+          name: signaldesk-backend-macos-x64
+          path: .build/backend/x64
+
+      - name: Create universal macOS backend
+        run: |
+          chmod +x .build/backend/arm64/signaldesk-backend .build/backend/x64/signaldesk-backend
+          lipo -create \
+            .build/backend/arm64/signaldesk-backend \
+            .build/backend/x64/signaldesk-backend \
+            -output .build/signaldesk-backend
+          chmod +x .build/signaldesk-backend
+          lipo -archs .build/signaldesk-backend
+
+      - name: Build and publish universal macOS DMG
+        env:
+          GH_TOKEN: ${{ secrets.UPDATES_TOKEN }}
+          SIGNALDESK_GITHUB_REPOSITORY: ${{ env.UPDATE_REPOSITORY }}
+          SIGNALDESK_BACKEND_EXECUTABLE: ${{ github.workspace }}/.build/signaldesk-backend
+          SIGNALDESK_BUILD_ARCH: universal
+          MACOS_SIGNING_CERTIFICATE: ${{ secrets.MACOS_CSC_LINK }}
+          MACOS_SIGNING_PASSWORD: ${{ secrets.MACOS_CSC_KEY_PASSWORD }}
+          NOTARIZATION_APPLE_ID: ${{ secrets.APPLE_ID }}
+          NOTARIZATION_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          NOTARIZATION_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          if [ -n "$MACOS_SIGNING_CERTIFICATE" ]; then
+            export CSC_LINK="$MACOS_SIGNING_CERTIFICATE"
+            export CSC_KEY_PASSWORD="$MACOS_SIGNING_PASSWORD"
+          fi
+          if [ -n "$NOTARIZATION_APPLE_ID" ] && [ -n "$NOTARIZATION_PASSWORD" ] && [ -n "$NOTARIZATION_TEAM_ID" ]; then
+            export APPLE_ID="$NOTARIZATION_APPLE_ID"
+            export APPLE_APP_SPECIFIC_PASSWORD="$NOTARIZATION_PASSWORD"
+            export APPLE_TEAM_ID="$NOTARIZATION_TEAM_ID"
+          fi
+          bun run release:unix
+
+      - name: Publish macOS installer
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "${{ github.ref_name }}" "release/SignalDesk-macOS-universal.dmg" --repo "${{ github.repository }}" --clobber
+
+      - name: Preserve macOS CI artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: SignalDesk-${{ github.ref_name }}-macOS-universal
+          path: release/*
+          if-no-files-found: error
+
+  build-linux:
+    needs: prepare-release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v5
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes binutils
+          bun install --frozen-lockfile
+          python -m pip install "pyinstaller==$PYINSTALLER_VERSION"
+
+      - name: Build standalone local backend
+        run: |
+          python -m PyInstaller --clean --noconfirm --onefile --name signaldesk-backend backend.py
+          chmod +x dist/signaldesk-backend
+
+      - name: Build and publish Linux packages
+        env:
+          GH_TOKEN: ${{ secrets.UPDATES_TOKEN }}
+          SIGNALDESK_GITHUB_REPOSITORY: ${{ env.UPDATE_REPOSITORY }}
+          SIGNALDESK_BACKEND_EXECUTABLE: ${{ github.workspace }}/dist/signaldesk-backend
+          SIGNALDESK_BUILD_ARCH: x64
+        run: bun run release:unix
+
+      - name: Verify Linux desktop icons
+        run: |
+          dpkg-deb --contents "release/SignalDesk-Linux-amd64.deb" \
+            | grep -E '/usr/share/icons/hicolor/[0-9]+x[0-9]+/apps/signaldesk.png$'
+
+      - name: Publish Linux installer
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "${{ github.ref_name }}" "release/SignalDesk-Linux-amd64.deb" --repo "${{ github.repository }}" --clobber
+
+      - name: Preserve Linux CI artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: SignalDesk-${{ github.ref_name }}-Linux-x64
+          path: release/*
+          if-no-files-found: error
+

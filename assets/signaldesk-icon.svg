@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-labelledby="title description">
+  <title id="title">SignalDesk application icon</title>
+  <desc id="description">Three white signal bars on a rounded violet square</desc>
+  <defs>
+    <linearGradient id="background" x1="120" y1="100" x2="904" y2="924" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#726BEA"/>
+      <stop offset="0.5" stop-color="#5B55D6"/>
+      <stop offset="1" stop-color="#413BA9"/>
+    </linearGradient>
+    <linearGradient id="highlight" x1="256" y1="140" x2="768" y2="840" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect x="64" y="64" width="896" height="896" rx="224" fill="#292568" opacity="0.18"/>
+  <rect x="72" y="56" width="880" height="880" rx="220" fill="url(#background)"/>
+  <path d="M292 164C198 210 136 306 136 416V686C136 796 224 884 334 884H704C801 884 884 814 900 720V276C865 194 784 136 688 136H382C350 136 320 146 292 164Z" fill="url(#highlight)"/>
+  <rect x="266" y="502" width="112" height="250" rx="56" fill="#FFFFFF" opacity="0.72"/>
+  <rect x="456" y="274" width="112" height="478" rx="56" fill="#FFFFFF"/>
+  <rect x="646" y="390" width="112" height="362" rx="56" fill="#FFFFFF" opacity="0.86"/>
+</svg>

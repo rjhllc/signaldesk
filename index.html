@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>SignalDesk</title>
+  <link rel="stylesheet" href="styles.css?v=0.1.0-alpha.1">
+</head>
+<body>
+  <aside id="saved-searches" class="saved-searches" aria-hidden="true" aria-labelledby="saved-searches-title">
+    <div class="saved-searches-header">
+      <div><p class="eyebrow">REUSABLE SETUPS</p><h2 id="saved-searches-title">Saved searches</h2></div>
+      <button id="saved-searches-close" class="icon-button" type="button" aria-label="Close saved searches">×</button>
+    </div>
+    <p class="saved-searches-intro">Save the query and every current filter, toggle, sort, and AI instruction.</p>
+    <label class="saved-search-name" for="saved-search-name"><span>Search name</span><input id="saved-search-name" maxlength="80" autocomplete="off" placeholder="Uses the current query when blank"></label>
+    <button id="save-search" class="save-search-button" type="button">Save current setup</button>
+    <p id="saved-search-feedback" class="saved-search-feedback" aria-live="polite"></p>
+    <div id="saved-search-list" class="saved-search-list"></div>
+  </aside>
+  <button id="saved-searches-scrim" class="saved-searches-scrim hidden" type="button" aria-label="Close saved searches"></button>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="SignalDesk home"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span><span><strong>SignalDesk</strong><small>Focused X research</small></span></a>
+      <div class="topbar-actions">
+        <button id="saved-searches-button" class="settings-button" type="button">Saved searches</button>
+        <button id="reset-application" class="reset-application" type="button">Clear fields</button>
+        <button id="settings-button" class="settings-button hidden" type="button">Credentials</button>
+        <div class="connection" id="connection" data-state="checking"><span class="connection-dot" aria-hidden="true"></span><span><strong id="status">Checking backend</strong><small id="status-detail">Verifying build</small></span></div>
+      </div>
+    </header>
+
+    <main>
+      <section class="search-panel" aria-labelledby="search-heading">
+        <div class="panel-heading"><div><p class="eyebrow">LIVE X DATA</p><h1 id="search-heading">Search X</h1></div><span class="no-demo">Live data only</span></div>
+
+        <label class="query-label" for="query">What do you want to find?</label>
+        <div class="query-row"><span class="search-icon" aria-hidden="true"></span><input id="query" autocomplete="off" spellcheck="false" placeholder="Topic, phrase, @handle, or X query" autofocus><button id="search" class="primary-button" type="button"><span>Search</span><b aria-hidden="true">→</b></button></div>
+        <p class="input-help">Search for a topic, company, person, phrase, or handle. Advanced X query syntax also works.</p>
+
+        <div class="control-grid primary-controls">
+          <label class="control"><span>Time range</span><select id="lookback"><option value="1d">Last 24 hours</option><option value="1wk" selected>Last 7 days</option><option value="1m">Last 30 days</option></select></label>
+          <label class="control"><span>Number of posts</span><select id="limit"><option value="25">Up to 25</option><option value="50" selected>Up to 50</option><option value="75">Up to 75</option><option value="100">Up to 100</option></select></label>
+          <label class="control"><span>Find posts by</span><select id="retrieval-order"><option value="recency" selected>Most recent</option><option value="relevancy">Most relevant</option></select></label>
+        </div>
+
+        <div class="type-brand-row">
+          <fieldset class="type-filter"><legend>Post types</legend><label><input type="checkbox" data-post-type="original" checked><span>Original posts</span></label><label><input type="checkbox" data-post-type="reply"><span>Replies</span></label><label><input type="checkbox" data-post-type="quote"><span>Quotes</span></label><em>Reposts are always excluded</em></fieldset>
+          <div class="brand-filter"><label class="switch-label"><input id="exclude-brand" type="checkbox"><span class="switch" aria-hidden="true"></span><span><strong>Exclude the brand's own posts</strong><small>Keep posts from everyone else.</small></span></label><label id="brand-field" class="brand-field hidden"><span>Brand's X handle</span><input id="brand-handle" placeholder="@handle" autocomplete="off"></label></div>
+        </div>
+
+        <div class="quick-filters">
+          <label class="control"><span>Links</span><select data-filter="links"><option value="any">Any</option><option value="include">Must include links</option><option value="exclude">Exclude links</option></select></label>
+          <label class="control"><span>Media</span><select data-filter="media"><option value="any">Any</option><option value="media">Any media</option><option value="images">Images</option><option value="video">Native video</option><option value="exclude">Exclude media</option></select></label>
+          <label class="control"><span>Language</span><select data-filter="language"><option value="">Any language</option><option value="en">English</option><option value="es">Spanish</option><option value="fr">French</option><option value="de">German</option><option value="it">Italian</option><option value="pt">Portuguese</option><option value="ja">Japanese</option><option value="ko">Korean</option><option value="zh-CN">Chinese (Simplified)</option><option value="zh-TW">Chinese (Traditional)</option><option value="ar">Arabic</option><option value="hi">Hindi</option><option value="ru">Russian</option><option value="tr">Turkish</option><option value="uk">Ukrainian</option><option value="nl">Dutch</option><option value="pl">Polish</option><option value="sv">Swedish</option><option value="no">Norwegian</option><option value="da">Danish</option><option value="fi">Finnish</option><option value="cs">Czech</option><option value="el">Greek</option><option value="he">Hebrew</option><option value="id">Indonesian</option><option value="th">Thai</option><option value="vi">Vietnamese</option></select></label>
+          <label class="control"><span>Author status</span><select data-filter="verified"><option value="any">Any author</option><option value="only">Verified only</option><option value="exclude">Exclude verified</option></select></label>
+          <label class="control"><span>Promotional posts</span><select data-filter="promotional"><option value="include">Include them</option><option value="exclude">Exclude them</option></select></label>
+        </div>
+        <label class="control exclusion-list">
+          <span>Exclude words or phrases</span>
+          <textarea data-filter="exclude_terms" rows="3" autocomplete="off" placeholder="giveaway&#10;pump and dump&#10;sponsored"></textarea>
+          <small>Separate items with commas or new lines. Posts containing any item will not appear.</small>
+        </label>
+
+        <details class="advanced-panel" id="advanced-panel">
+          <summary><span>More filters</span><small id="advanced-count">None applied</small></summary>
+          <div class="advanced-content">
+            <details class="filter-section" data-filter-section="content-presence">
+              <summary>
+                <span class="section-title"><strong>Content presence</strong><small>Official <code>has:</code> operators.</small></span>
+                <span class="section-tools" role="group" aria-label="Arrange Content presence">
+                  <button class="section-tool" type="button" data-section-move="up" aria-label="Move Content presence up">Up</button>
+                  <button class="section-tool" type="button" data-section-move="down" aria-label="Move Content presence down">Down</button>
+                  <button class="section-tool section-drag" type="button" draggable="true" aria-label="Drag Content presence to rearrange">Drag</button>
+                </span>
+              </summary>
+              <div class="filter-section-body"><div class="filter-grid four">
+                <label class="control"><span>Hashtags</span><select data-filter="hashtags"><option value="any">Any</option><option value="include">Must include</option><option value="exclude">Exclude</option></select></label>
+                <label class="control"><span>Cashtags</span><select data-filter="cashtags"><option value="any">Any</option><option value="include">Must include</option><option value="exclude">Exclude</option></select></label>
+                <label class="control"><span>Mentions</span><select data-filter="mentions"><option value="any">Any</option><option value="include">Must include</option><option value="exclude">Exclude</option></select></label>
+                <label class="control"><span>Geotag</span><select data-filter="geo"><option value="any">Any</option><option value="include">Must include</option><option value="exclude">Exclude</option></select></label>
+              </div></div>
+            </details>
+
+            <details class="filter-section" data-filter-section="people-entities">
+              <summary>
+                <span class="section-title"><strong>People and exact entities</strong><small>Separate multiple handles or symbols with commas.</small></span>
+                <span class="section-tools" role="group" aria-label="Arrange People and exact entities">
+                  <button class="section-tool" type="button" data-section-move="up" aria-label="Move People and exact entities up">Up</button>
+                  <button class="section-tool" type="button" data-section-move="down" aria-label="Move People and exact entities down">Down</button>
+                  <button class="section-tool section-drag" type="button" draggable="true" aria-label="Drag People and exact entities to rearrange">Drag</button>
+                </span>
+              </summary>
+              <div class="filter-section-body"><div class="filter-grid three">
+                <label class="control"><span>Posted by (from:)</span><input data-filter="from_handles" placeholder="@handle1, @handle2"></label>
+                <label class="control"><span>Replying to (to:)</span><input data-filter="to_handles" placeholder="@handle"></label>
+                <label class="control"><span>Mentioning handles</span><input data-filter="mention_handles" placeholder="@handle"></label>
+                <label class="control"><span>Specific hashtags</span><input data-filter="hashtag_terms" placeholder="#topic, #brand"></label>
+                <label class="control"><span>Specific cashtags</span><input data-filter="cashtag_terms" placeholder="$BTC, $ETH"></label>
+                <label class="control"><span>URL contains</span><input data-filter="url_match" placeholder="domain.com/path"></label>
+                <label class="control"><span>Entity text</span><input data-filter="entity" placeholder="Entity name"></label>
+                <label class="control"><span>Context annotation</span><input data-filter="context" placeholder="domain.entity IDs"></label>
+                <label class="control"><span>X List ID</span><input data-filter="list_id" inputmode="numeric" placeholder="Numeric list ID"></label>
+              </div></div>
+            </details>
+
+            <details class="filter-section" data-filter-section="conversation-references">
+              <summary>
+                <span class="section-title"><strong>Conversation and post references</strong><small>Native repost references are unavailable because reposts are fixed off.</small></span>
+                <span class="section-tools" role="group" aria-label="Arrange Conversation and post references">
+                  <button class="section-tool" type="button" data-section-move="up" aria-label="Move Conversation and post references up">Up</button>
+                  <button class="section-tool" type="button" data-section-move="down" aria-label="Move Conversation and post references down">Down</button>
+                  <button class="section-tool section-drag" type="button" draggable="true" aria-label="Drag Conversation and post references to rearrange">Drag</button>
+                </span>
+              </summary>
+              <div class="filter-section-body"><div class="filter-grid three">
+                <label class="control"><span>Conversation ID</span><input data-filter="conversation_id" inputmode="numeric" placeholder="Numeric post ID"></label>
+                <label class="control"><span>Replies to post ID</span><input data-filter="in_reply_to_tweet_id" inputmode="numeric" placeholder="Numeric post ID"></label>
+                <label class="control"><span>Quotes of post ID</span><input data-filter="quotes_of_tweet_id" inputmode="numeric" placeholder="Numeric post ID"></label>
+              </div></div>
+            </details>
+
+            <details class="filter-section" data-filter-section="minimum-engagement">
+              <summary>
+                <span class="section-title"><strong>Minimum engagement</strong><small>X applies these before returning posts.</small></span>
+                <span class="section-tools" role="group" aria-label="Arrange Minimum engagement">
+                  <button class="section-tool" type="button" data-section-move="up" aria-label="Move Minimum engagement up">Up</button>
+                  <button class="section-tool" type="button" data-section-move="down" aria-label="Move Minimum engagement down">Down</button>
+                  <button class="section-tool section-drag" type="button" draggable="true" aria-label="Drag Minimum engagement to rearrange">Drag</button>
+                </span>
+              </summary>
+              <div class="filter-section-body"><div class="filter-grid three">
+                <label class="control"><span>Minimum likes</span><input data-filter="min_likes" type="number" min="0" step="1" placeholder="0"></label>
+                <label class="control"><span>Minimum replies</span><input data-filter="min_replies" type="number" min="0" step="1" placeholder="0"></label>
+                <label class="control"><span>Minimum reposts</span><input data-filter="min_reposts" type="number" min="0" step="1" placeholder="0"></label>
+              </div></div>
+            </details>
+
+            <details class="filter-section" data-filter-section="location">
+              <summary>
+                <span class="section-title"><strong>Location</strong><small>Place, country, radius, or bounding-box operators.</small></span>
+                <span class="section-tools" role="group" aria-label="Arrange Location">
+                  <button class="section-tool" type="button" data-section-move="up" aria-label="Move Location up">Up</button>
+                  <button class="section-tool" type="button" data-section-move="down" aria-label="Move Location down">Down</button>
+                  <button class="section-tool section-drag" type="button" draggable="true" aria-label="Drag Location to rearrange">Drag</button>
+                </span>
+              </summary>
+              <div class="filter-section-body"><div class="filter-grid four">
+                <label class="control"><span>Place name</span><input data-filter="place" placeholder="New York City"></label>
+                <label class="control"><span>Country code</span><input data-filter="country" maxlength="2" placeholder="US"></label>
+                <label class="control"><span>Longitude</span><input data-filter="longitude" type="number" min="-180" max="180" step="any" placeholder="-73.98"></label>
+                <label class="control"><span>Latitude</span><input data-filter="latitude" type="number" min="-90" max="90" step="any" placeholder="40.76"></label>
+                <label class="control"><span>Radius</span><input data-filter="radius" type="number" min="0.01" step="any" placeholder="10"></label>
+                <label class="control"><span>Radius unit</span><select data-filter="radius_unit"><option value="km">Kilometres</option><option value="mi">Miles</option></select></label>
+                <label class="control"><span>Bounding west</span><input data-filter="bounding_west" type="number" min="-180" max="180" step="any"></label>
+                <label class="control"><span>Bounding south</span><input data-filter="bounding_south" type="number" min="-90" max="90" step="any"></label>
+                <label class="control"><span>Bounding east</span><input data-filter="bounding_east" type="number" min="-180" max="180" step="any"></label>
+                <label class="control"><span>Bounding north</span><input data-filter="bounding_north" type="number" min="-90" max="90" step="any"></label>
+              </div></div>
+            </details>
+
+            <span id="section-order-status" class="sr-only" aria-live="polite"></span>
+            <p class="operator-note"><strong>Tip:</strong> Start with the simple filters above. Use these only when you need exact accounts, URLs, post IDs, engagement thresholds, or locations.</p>
+          </div>
+        </details>
+
+        <details class="request-inspector">
+          <summary><span>Request details</span><small id="preview-state">Enter a search to preview</small></summary>
+          <div class="request-inspector-body">
+            <div class="query-preview"><span>Query sent to X</span><code id="query-preview">—</code></div>
+            <div id="api-parameters" class="request-facts"></div>
+            <details class="request-url-row"><summary>Full request URL</summary><code id="request-url">—</code></details>
+          </div>
+        </details>
+      </section>
+
+      <section id="report" class="report hidden" aria-live="polite">
+        <div class="report-bar"><div><p class="eyebrow">LIVE RESULTS</p><h2 id="report-title">X search report</h2><p id="message">Waiting for X</p></div><button id="export" class="secondary-button" type="button" disabled>Export CSV <span aria-hidden="true">↓</span></button></div>
+        <div class="summary-grid">
+          <article><span>Posts</span><strong id="stat-posts">0</strong><small id="stat-requested">of 0 requested</small></article>
+          <article><span>Authors</span><strong id="stat-authors">0</strong><small>unique in returned set</small></article>
+          <article><span>Engagement</span><strong id="stat-engagement">0</strong><small>Total interactions</small></article>
+          <article class="sentiment-card"><span>Sentiment</span><strong id="stat-sentiment">—</strong><small id="stat-sentiment-score">Not analyzed</small></article>
+          <article><span>Impressions</span><strong id="stat-impressions">0</strong><small>When available</small></article>
+        </div>
+        <div id="sentiment-overview" class="sentiment-overview"></div>
+        <details class="report-details"><summary><span>Search details</span><small>Exact query, filters, and coverage</small></summary><div id="diagnostics" class="diagnostics"></div></details>
+        <section id="llm-refiner" class="llm-refiner hidden" aria-labelledby="llm-refiner-title">
+          <div class="llm-refiner-heading">
+            <div>
+              <p class="eyebrow">AI RESULT REVIEW</p>
+              <h3 id="llm-refiner-title">Create an AI view from the posts already pulled</h3>
+            </div>
+            <span id="llm-refiner-model">Checking configuration</span>
+          </div>
+          <ol id="llm-conversation" class="llm-conversation hidden" aria-label="AI refinement conversation"></ol>
+          <label id="llm-instruction-label" for="llm-instruction">What should SignalDesk prioritize?</label>
+          <textarea id="llm-instruction" maxlength="2000" rows="4" autocomplete="off" placeholder="Use natural language to curate, filter, and sort your results."></textarea>
+          <div class="llm-refiner-actions">
+            <label>
+              <span>Action</span>
+              <select id="llm-action">
+                <option value="filter">Filter and rank</option>
+                <option value="rank">Rank all results</option>
+              </select>
+            </label>
+            <button id="llm-apply" class="ai-button" type="button" disabled>Create new tab</button>
+          </div>
+          <ol id="llm-progress" class="llm-progress hidden" aria-label="AI review progress">
+            <li data-llm-step="prepare"><i aria-hidden="true"></i><span><strong>Prepare posts</strong><small>Waiting</small></span></li>
+            <li data-llm-step="send"><i aria-hidden="true"></i><span><strong>Send to model</strong><small>Waiting</small></span></li>
+            <li data-llm-step="validate"><i aria-hidden="true"></i><span><strong>Validate response</strong><small>Waiting</small></span></li>
+            <li data-llm-step="render"><i aria-hidden="true"></i><span><strong>Build new tab</strong><small>Waiting</small></span></li>
+          </ol>
+          <p id="llm-feedback" class="llm-feedback" aria-live="polite">Describe the posts you need, then create a separate AI view.</p>
+        </section>
+        <div id="results-tabs" class="results-tabs" role="tablist" aria-label="Search result views">
+          <div class="results-tab-shell" data-active="true" role="presentation">
+            <button class="results-tab-select" type="button" role="tab" aria-selected="true" data-results-view="original">Original <span class="results-tab-count">0</span></button>
+          </div>
+        </div>
+        <div class="results-heading">
+          <div><h3 id="results-view-title">Original posts</h3><span id="result-count">0 results</span></div>
+          <label id="result-sort-control" class="result-sort-control">
+            <span>Sort these results</span>
+            <select id="sort">
+              <option id="sort-ai" value="ai" hidden>AI relevance</option>
+              <option value="newest">Newest first</option>
+              <option value="likes">Most likes</option>
+              <option value="reposts">Most reposts</option>
+              <option value="replies">Most replies</option>
+              <option value="followers">Largest author audience</option>
+            </select>
+            <small>Instant — does not search X again</small>
+          </label>
+        </div>
+        <p id="sort-proof" class="sort-proof" aria-live="polite"></p>
+        <div id="results" class="results"></div>
+      </section>
+    </main>
+    <footer><span>SignalDesk</span><span id="build-label">Alpha 1</span></footer>
+  </div>
+  <div id="settings-dialog" class="settings-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="settings-title" aria-describedby="settings-intro">
+    <section class="settings-card">
+      <div class="settings-header">
+        <div><p class="eyebrow">DESKTOP SETUP</p><h2 id="settings-title">SignalDesk credentials</h2></div>
+        <button id="settings-close" class="icon-button hidden" type="button" aria-label="Close credentials">×</button>
+      </div>
+      <p id="settings-intro" class="settings-intro">Paste the X API Bearer Token used for live searches. This is the only required credential.</p>
+      <form id="settings-form" novalidate>
+        <label class="settings-field" for="x-bearer-token">
+          <span>X Bearer Token <b>Required</b></span>
+          <input id="x-bearer-token" type="password" maxlength="10000" autocomplete="off" spellcheck="false" placeholder="Paste your X API Bearer Token">
+          <small>Encrypted for your operating-system account and kept outside the installed application files.</small>
+        </label>
+        <details class="optional-settings">
+          <summary><span>Optional AI result filtering</span><small>Use OpenAI or Anthropic after results are pulled.</small></summary>
+          <div class="optional-settings-body">
+            <label class="settings-field" for="llm-provider">
+              <span>API provider</span>
+              <select id="llm-provider"><option value="openai">OpenAI</option><option value="anthropic">Anthropic</option></select>
+            </label>
+            <label class="settings-field" for="llm-api-key">
+              <span>API key</span>
+              <input id="llm-api-key" type="password" maxlength="10000" autocomplete="off" spellcheck="false" placeholder="Paste the provider API key">
+              <small>Encrypted with the same desktop credential storage as your X token and sent only to the selected provider.</small>
+            </label>
+            <label class="settings-field" for="llm-model">
+              <span>Model</span>
+              <select id="llm-model"></select>
+            </label>
+            <label id="llm-custom-model-row" class="settings-field hidden" for="llm-custom-model">
+              <span>Custom model ID</span>
+              <input id="llm-custom-model" maxlength="200" autocomplete="off" spellcheck="false" placeholder="Enter the exact provider model ID">
+            </label>
+            <label id="clear-llm-row" class="clear-credentials hidden"><input id="clear-llm" type="checkbox"><span>Remove saved AI credentials</span></label>
+            <p class="settings-help">Provider API billing is separate from ChatGPT or Anthropic subscriptions. The model list contains current text models appropriate for result review; Custom model ID supports future models.</p>
+          </div>
+        </details>
+        <section class="local-data-card" aria-labelledby="local-data-title">
+          <div>
+            <strong id="local-data-title">Local app data</strong>
+            <code id="data-location">Available in the packaged desktop app</code>
+            <small>Encrypted credentials, saved searches, and application settings stay in this folder.</small>
+          </div>
+          <button id="open-data-location" class="secondary-button" type="button">Open data folder</button>
+        </section>
+        <p id="settings-error" class="settings-error" role="alert"></p>
+        <div class="settings-actions">
+          <button id="settings-cancel" class="secondary-button hidden" type="button">Cancel</button>
+          <button id="settings-save" class="save-settings-button" type="submit">Save and start SignalDesk</button>
+        </div>
+      </form>
+    </section>
+  </div>
+  <div id="update-dialog" class="update-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="update-title" aria-describedby="update-detail">
+    <section class="update-card">
+      <p class="eyebrow">SOFTWARE UPDATE</p>
+      <h2 id="update-title">A SignalDesk update is available</h2>
+      <p id="update-detail">A newer version can be downloaded from the official SignalDesk GitHub Release.</p>
+      <div id="update-progress" class="update-progress hidden" role="progressbar" aria-label="Update download progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <div><span>Downloading update</span><strong id="update-percent">0%</strong></div>
+        <i><b id="update-progress-bar"></b></i>
+      </div>
+      <p class="update-privacy">The updater never sends your X token, LLM key, searches, or results. GitHub receives only normal update-check and download request metadata.</p>
+      <p id="update-error" class="settings-error" role="alert"></p>
+      <div class="update-actions">
+        <button id="update-later" class="secondary-button" type="button">Later</button>
+        <button id="update-primary" class="save-settings-button" type="button">Download update</button>
+      </div>
+    </section>
+  </div>
+  <script src="app.js?v=0.1.0-alpha.1" defer></script>
+</body>
+</html>

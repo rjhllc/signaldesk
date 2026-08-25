@@ -1,0 +1,30 @@
+# Dependencies and generated builds
+node_modules/
+.build/
+.build-cache/
+release/
+build/
+dist/
+*.spec
+__pycache__/
+*.py[cod]
+
+# Credentials and local configuration
+.env
+.env.*
+!.env.example
+credentials.json
+*.pfx
+*.p12
+*.pem
+*.key
+
+# Local diagnostics and transfer artifacts
+errors/
+*.log
+
+# Editor and operating-system state
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
