@@ -65,4 +65,4 @@ Use of X, an LLM provider, and GitHub is subject to those providers' privacy pol
 
 ## Contact
 
-Privacy and security questions may be submitted through the private SignalDesk source repository or the public release repository's security reporting channel. Do not include API keys, bearer tokens, saved credential files, or confidential search results in a public issue.
+Privacy questions may be sent to [support@signaldesk.run](mailto:support@signaldesk.run). Report security vulnerabilities through GitHub's private vulnerability reporting form. Do not include API keys, bearer tokens, saved credential files, or confidential search results in email or a public issue.

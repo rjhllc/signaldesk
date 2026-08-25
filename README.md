@@ -10,6 +10,8 @@
   <a href="https://github.com/rjhllc/signaldesk/releases/latest">Download SignalDesk</a>
   ·
   <a href="PRIVACY.md">Privacy</a>
+  ·
+  <a href="mailto:support@signaldesk.run">Support</a>
 </p>
 
 ## What SignalDesk does
