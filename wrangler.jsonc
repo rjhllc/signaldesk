@@ -1,0 +1,21 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "signaldesk-site",
+  "compatibility_date": "2026-08-25",
+  "workers_dev": false,
+  "assets": {
+    "directory": "./site",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page"
+  },
+  "routes": [
+    {
+      "pattern": "signaldesk.run",
+      "custom_domain": true
+    },
+    {
+      "pattern": "www.signaldesk.run",
+      "custom_domain": true
+    }
+  ]
+}
