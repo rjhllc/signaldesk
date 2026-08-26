@@ -81,12 +81,25 @@ if (platform) {
 
 const supportMenu = document.querySelector('[data-support-menu]');
 const supportTrigger = supportMenu?.querySelector('.support-trigger');
+const supportPopover = supportMenu?.querySelector('.support-popover');
+
+function syncSupportPopover() {
+  if (!supportMenu || !supportTrigger || !supportPopover) return;
+  const visible = supportTrigger.getAttribute('aria-expanded') === 'true' || supportMenu.matches(':hover');
+  supportPopover.setAttribute('aria-hidden', String(!visible));
+}
 
 function setSupportMenuOpen(open) {
   if (!supportMenu || !supportTrigger) return;
   supportMenu.dataset.open = String(open);
   supportTrigger.setAttribute('aria-expanded', String(open));
+  syncSupportPopover();
 }
+
+setSupportMenuOpen(false);
+
+supportMenu?.addEventListener('mouseenter', syncSupportPopover);
+supportMenu?.addEventListener('mouseleave', syncSupportPopover);
 
 supportTrigger?.addEventListener('click', (event) => {
   event.stopPropagation();
