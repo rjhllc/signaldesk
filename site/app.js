@@ -78,3 +78,27 @@ if (platform) {
 } else {
   platformTabs.forEach((tab) => { tab.tabIndex = 0; });
 }
+
+const supportMenu = document.querySelector('[data-support-menu]');
+const supportTrigger = supportMenu?.querySelector('.support-trigger');
+
+function setSupportMenuOpen(open) {
+  if (!supportMenu || !supportTrigger) return;
+  supportMenu.dataset.open = String(open);
+  supportTrigger.setAttribute('aria-expanded', String(open));
+}
+
+supportTrigger?.addEventListener('click', (event) => {
+  event.stopPropagation();
+  setSupportMenuOpen(supportTrigger.getAttribute('aria-expanded') !== 'true');
+});
+
+document.addEventListener('click', (event) => {
+  if (supportMenu && !supportMenu.contains(event.target)) setSupportMenuOpen(false);
+});
+
+document.addEventListener('keydown', (event) => {
+  if (event.key !== 'Escape' || supportTrigger?.getAttribute('aria-expanded') !== 'true') return;
+  setSupportMenuOpen(false);
+  supportTrigger.focus();
+});
