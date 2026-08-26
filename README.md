@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://signaldesk.run">
-    <img src="assets/signaldesk-banner.svg?v=4" alt="SignalDesk — Find the signal in the feed." width="100%">
+    <img src="assets/signaldesk-readme-banner.svg" alt="SignalDesk — Find the signal in the feed." width="100%">
   </a>
 </p>
 
