@@ -501,7 +501,7 @@ class Default(WorkerEntrypoint):
             body = {
                 'ok': False,
                 'build': core.BUILD_VERSION,
-                'error': 'X API {}: {}'.format(error.status or 'network error', error.detail),
+                'error': core.x_api_error_message(error, plan),
                 'x_status': error.status,
             }
             if plan:

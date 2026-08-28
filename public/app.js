@@ -11,6 +11,11 @@ const SORT_LABELS = {
   followers: 'Largest author audience',
 };
 const INLINE_EXCLUDE_RE = /\/\s*exclude\s+brand\s+posts\s+@?([A-Za-z0-9_]{1,15})\b/i;
+const LOOKBACK_HELP = {
+  '1d': 'Recent search · within X’s 7-day window.',
+  '1wk': 'Recent search · X limits this endpoint to 7 days.',
+  '1m': 'Full archive · X pay-per-use or Enterprise access required.',
+};
 const FILTER_DEFAULTS = {
   links: 'any', media: 'any', language: '', verified: 'any', promotional: 'include',
   hashtags: 'any', cashtags: 'any', mentions: 'any', geo: 'any', radius_unit: 'km',
@@ -67,6 +72,7 @@ const elements = {
   clearLlmRow: element('#clear-llm-row'),
   query: element('#query'),
   lookback: element('#lookback'),
+  lookbackHelp: element('#lookback-help'),
   limit: element('#limit'),
   retrievalOrder: element('#retrieval-order'),
   sort: element('#sort'),
@@ -579,6 +585,7 @@ function setSelectValue(select, value) {
 function applySavedSearch(snapshot) {
   elements.query.value = String(snapshot.query || '');
   setSelectValue(elements.lookback, snapshot.lookback);
+  updateLookbackHelp();
   setSelectValue(elements.limit, snapshot.limit);
   setSelectValue(elements.retrievalOrder, snapshot.retrievalOrder);
   setSelectValue(elements.sort, snapshot.sort);
@@ -649,6 +656,7 @@ function resetSignalDesk() {
   previewSequence += 1;
   elements.query.value = '';
   elements.lookback.value = '1wk';
+  updateLookbackHelp();
   elements.limit.value = '50';
   elements.retrievalOrder.value = 'recency';
   elements.sort.value = 'newest';
@@ -886,9 +894,11 @@ function renderRequestPreview(meta) {
   elements.requestUrl.textContent = meta.request_url;
   const facts = [
     ['endpoint', meta.endpoint],
+    ['X coverage', meta.history_coverage],
+    ['X access', meta.access_requirement],
     ['start_time', meta.start_time],
-    ['max_results', meta.first_page_max_results],
-    ['target cap', meta.requested_limit],
+    ['endpoint maximum', meta.endpoint_max_results],
+    ['requested cap', meta.requested_limit],
     ['X order', meta.retrieval_order],
     ['local sort', meta.sort],
   ];
@@ -1450,6 +1460,10 @@ function downloadCsv() {
   window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
 }
 
+function updateLookbackHelp() {
+  elements.lookbackHelp.textContent = LOOKBACK_HELP[elements.lookback.value] || '';
+}
+
 function updateBrandField() {
   elements.brandField.classList.toggle('hidden', !elements.excludeBrand.checked);
   if (elements.excludeBrand.checked) elements.brandHandle.focus();
@@ -1467,7 +1481,10 @@ function handleQueryInput() {
 }
 
 elements.query.addEventListener('input', handleQueryInput);
-elements.lookback.addEventListener('change', schedulePreview);
+elements.lookback.addEventListener('change', () => {
+  updateLookbackHelp();
+  schedulePreview();
+});
 elements.limit.addEventListener('change', schedulePreview);
 elements.retrievalOrder.addEventListener('change', schedulePreview);
 elements.sort.addEventListener('change', resortCurrentResults);
@@ -1548,5 +1565,6 @@ async function initializeApplication() {
   await checkHealth();
 }
 
+updateLookbackHelp();
 initializeFilterSections();
 void initializeApplication();

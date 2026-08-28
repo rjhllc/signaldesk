@@ -41,6 +41,19 @@ Open [app.signaldesk.run](https://app.signaldesk.run).
 
 Create an app in the [X Developer Portal](https://developer.x.com/en/portal/dashboard), copy its Bearer Token, and paste it into SignalDesk's Credentials window.
 
+### X API scope and limits
+
+SignalDesk calls the official X API v2 directly; it does not use an MCP server.
+
+- **24 hours and 7 days:** use [`/2/tweets/search/recent`](https://docs.x.com/x-api/posts/search/introduction). X limits that endpoint to the most recent seven days and makes it available to all developers with an app.
+- **30 days:** uses [`/2/tweets/search/all`](https://docs.x.com/x-api/posts/search/introduction) with a 30-day `start_time`. X exposes the complete archive through that endpoint, but limits access to pay-per-use and Enterprise customers. A Bearer Token without full-archive access or available credits cannot run this option.
+- **Result volume:** SignalDesk returns at most 100 posts per search. X allows up to 100 posts per recent-search page and 500 per full-archive page; SignalDesk's lower cap bounds browser work and provider usage.
+- **Query size:** X limits self-serve queries to 512 characters for recent search and 1,024 for full-archive search. SignalDesk validates the generated query against the applicable limit before sending it.
+- **Rate limits:** X currently documents 450 recent-search requests per 15 minutes per app. Full-archive search is limited to one request per second and 300 requests per 15 minutes per app. See [X API rate limits](https://docs.x.com/x-api/fundamentals/rate-limits).
+- **Usage charges:** X currently lists Post reads at $0.005 per returned resource and User reads at $0.010, with a 3-million-Post-read monthly pay-per-use cap and 24-hour UTC deduplication. SignalDesk requests author expansions with posts, so monitor the resulting usage and current rates in the X Developer Console. See [X API pricing](https://docs.x.com/x-api/getting-started/pricing).
+- **Operators:** `has:hashtags`, `has:cashtags`, and `has:mentions` mean “contains any.” Use SignalDesk's adjacent exact-value fields for specific `#hashtags`, `$cashtags`, or `@mentions`. The `entity:` operator works only with recent search. X search matches Quote Post text, not the text of the quoted original. See the [operator reference](https://docs.x.com/x-api/posts/search/integrate/operators) and [query rules](https://docs.x.com/x-api/posts/search/integrate/build-a-query).
+- **SignalDesk-specific constraints:** native reposts are always excluded, only original posts/replies/quotes can be selected, and the available time presets are 24 hours, 7 days, and 30 days.
+
 ### Optional: AI review
 
 Choose **OpenAI** or **Anthropic**, paste that provider's API key, and select a model. AI review is available only after an X search returns posts. X, OpenAI, and Anthropic may require separate paid API access; SignalDesk does not receive those payments.

@@ -42,7 +42,15 @@
         <p class="input-help">Search for a topic, company, person, phrase, or handle. Advanced X query syntax also works.</p>
 
         <div class="control-grid primary-controls">
-          <label class="control"><span>Time range</span><select id="lookback"><option value="1d">Last 24 hours</option><option value="1wk" selected>Last 7 days</option><option value="1m">Last 30 days</option></select></label>
+          <label class="control lookback-control">
+            <span>Time range</span>
+            <select id="lookback" aria-describedby="lookback-help">
+              <option value="1d">Last 24 hours</option>
+              <option value="1wk" selected>Last 7 days</option>
+              <option value="1m">Last 30 days · paid X access</option>
+            </select>
+            <small id="lookback-help">Recent search · X limits this endpoint to 7 days.</small>
+          </label>
           <label class="control"><span>Number of posts</span><select id="limit"><option value="25">Up to 25</option><option value="50" selected>Up to 50</option><option value="75">Up to 75</option><option value="100">Up to 100</option></select></label>
           <label class="control"><span>Find posts by</span><select id="retrieval-order"><option value="recency" selected>Most recent</option><option value="relevancy">Most relevant</option></select></label>
         </div>
@@ -70,36 +78,40 @@
           <div class="advanced-content">
             <details class="filter-section" data-filter-section="content-presence">
               <summary>
-                <span class="section-title"><strong>Content presence</strong><small>Official <code>has:</code> operators.</small></span>
-                <span class="section-tools" role="group" aria-label="Arrange Content presence">
-                  <button class="section-tool" type="button" data-section-move="up" aria-label="Move Content presence up">Up</button>
-                  <button class="section-tool" type="button" data-section-move="down" aria-label="Move Content presence down">Down</button>
-                  <button class="section-tool section-drag" type="button" draggable="true" aria-label="Drag Content presence to rearrange">Drag</button>
+                <span class="section-title"><strong>Tags and presence</strong><small>Match any tag or enter exact values.</small></span>
+                <span class="section-tools" role="group" aria-label="Arrange Tags and presence">
+                  <button class="section-tool" type="button" data-section-move="up" aria-label="Move Tags and presence up">Up</button>
+                  <button class="section-tool" type="button" data-section-move="down" aria-label="Move Tags and presence down">Down</button>
+                  <button class="section-tool section-drag" type="button" draggable="true" aria-label="Drag Tags and presence to rearrange">Drag</button>
                 </span>
               </summary>
-              <div class="filter-section-body"><div class="filter-grid four">
-                <label class="control"><span>Hashtags</span><select data-filter="hashtags"><option value="any">Any</option><option value="include">Must include</option><option value="exclude">Exclude</option></select></label>
-                <label class="control"><span>Cashtags</span><select data-filter="cashtags"><option value="any">Any</option><option value="include">Must include</option><option value="exclude">Exclude</option></select></label>
-                <label class="control"><span>Mentions</span><select data-filter="mentions"><option value="any">Any</option><option value="include">Must include</option><option value="exclude">Exclude</option></select></label>
-                <label class="control"><span>Geotag</span><select data-filter="geo"><option value="any">Any</option><option value="include">Must include</option><option value="exclude">Exclude</option></select></label>
-              </div></div>
+              <div class="filter-section-body">
+                <div class="filter-grid four">
+                  <label class="control"><span>Hashtag presence</span><select data-filter="hashtags"><option value="any">Any posts</option><option value="include">Has any hashtag</option><option value="exclude">No hashtags</option></select></label>
+                  <label class="control"><span>Cashtag presence</span><select data-filter="cashtags"><option value="any">Any posts</option><option value="include">Has any cashtag</option><option value="exclude">No cashtags</option></select></label>
+                  <label class="control"><span>Mention presence</span><select data-filter="mentions"><option value="any">Any posts</option><option value="include">Has any mention</option><option value="exclude">No mentions</option></select></label>
+                  <label class="control"><span>Geotag presence</span><select data-filter="geo"><option value="any">Any posts</option><option value="include">Has a geotag</option><option value="exclude">No geotag</option></select></label>
+                </div>
+                <div class="filter-grid three presence-values">
+                  <label class="control"><span>Specific hashtags</span><input data-filter="hashtag_terms" placeholder="#topic, #brand"></label>
+                  <label class="control"><span>Specific cashtags</span><input data-filter="cashtag_terms" placeholder="$BTC, $ETH"></label>
+                  <label class="control"><span>Specific mentions</span><input data-filter="mention_handles" placeholder="@handle1, @handle2"></label>
+                </div>
+              </div>
             </details>
 
             <details class="filter-section" data-filter-section="people-entities">
               <summary>
-                <span class="section-title"><strong>People and exact entities</strong><small>Separate multiple handles or symbols with commas.</small></span>
-                <span class="section-tools" role="group" aria-label="Arrange People and exact entities">
-                  <button class="section-tool" type="button" data-section-move="up" aria-label="Move People and exact entities up">Up</button>
-                  <button class="section-tool" type="button" data-section-move="down" aria-label="Move People and exact entities down">Down</button>
-                  <button class="section-tool section-drag" type="button" draggable="true" aria-label="Drag People and exact entities to rearrange">Drag</button>
+                <span class="section-title"><strong>People and entities</strong><small>Accounts, URLs, and official X entities.</small></span>
+                <span class="section-tools" role="group" aria-label="Arrange People and entities">
+                  <button class="section-tool" type="button" data-section-move="up" aria-label="Move People and entities up">Up</button>
+                  <button class="section-tool" type="button" data-section-move="down" aria-label="Move People and entities down">Down</button>
+                  <button class="section-tool section-drag" type="button" draggable="true" aria-label="Drag People and entities to rearrange">Drag</button>
                 </span>
               </summary>
               <div class="filter-section-body"><div class="filter-grid three">
                 <label class="control"><span>Posted by (from:)</span><input data-filter="from_handles" placeholder="@handle1, @handle2"></label>
                 <label class="control"><span>Replying to (to:)</span><input data-filter="to_handles" placeholder="@handle"></label>
-                <label class="control"><span>Mentioning handles</span><input data-filter="mention_handles" placeholder="@handle"></label>
-                <label class="control"><span>Specific hashtags</span><input data-filter="hashtag_terms" placeholder="#topic, #brand"></label>
-                <label class="control"><span>Specific cashtags</span><input data-filter="cashtag_terms" placeholder="$BTC, $ETH"></label>
                 <label class="control"><span>URL contains</span><input data-filter="url_match" placeholder="domain.com/path"></label>
                 <label class="control"><span>Entity text</span><input data-filter="entity" placeholder="Entity name"></label>
                 <label class="control"><span>Context annotation</span><input data-filter="context" placeholder="domain.entity IDs"></label>
@@ -256,6 +268,7 @@
           <input id="x-bearer-token" type="password" maxlength="10000" autocomplete="off" spellcheck="false" placeholder="Paste your X API Bearer Token">
           <small>Encrypted in this browser. Sent through SignalDesk's HTTPS relay only when you run a search; the relay forwards it to X without retaining it.</small>
         </label>
+        <p class="settings-help x-api-help">SignalDesk calls X API v2 directly. X access, credits, usage charges, and rate limits apply.</p>
         <details class="optional-settings">
           <summary><span>Optional AI result filtering</span><small>Use OpenAI or Anthropic after results are pulled.</small></summary>
           <div class="optional-settings-body">

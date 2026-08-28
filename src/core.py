@@ -1009,6 +1009,20 @@ def x_error_detail(body):
     return '; '.join(messages)[:800] or json.dumps(decoded)[:800]
 
 
+def x_api_error_message(error, plan=None):
+    message = 'X API {}: {}'.format(error.status or 'network error', error.detail)
+    if (
+        plan
+        and plan['endpoint'].endswith('/all')
+        and error.status in {402, 403}
+    ):
+        message += (
+            '. The 30-day option uses X full-archive search, which requires '
+            'pay-per-use or Enterprise access and available X credits'
+        )
+    return message
+
+
 def request_parameters(plan, page_size=None, pagination_token=None):
     parameters = {
         'query': plan['query_used'],
@@ -1073,6 +1087,17 @@ def public_plan(plan):
         'topic_query': plan['topic_query'],
         'endpoint': plan['endpoint'],
         'lookback': plan['lookback'],
+        'history_coverage': (
+            'Full archive endpoint · requested 30 days'
+            if plan['endpoint'].endswith('/all')
+            else 'Recent search · maximum 7 days'
+        ),
+        'access_requirement': (
+            'X pay-per-use or Enterprise'
+            if plan['endpoint'].endswith('/all')
+            else 'All X developers'
+        ),
+        'endpoint_max_results': 500 if plan['endpoint'].endswith('/all') else 100,
         'start_time': plan['start_time'],
         'requested_limit': plan['limit'],
         'first_page_max_results': parameters['max_results'],
@@ -1420,7 +1445,7 @@ class Handler(SimpleHTTPRequestHandler):
             body = {
                 'ok': False,
                 'build': BUILD_VERSION,
-                'error': 'X API {}: {}'.format(error.status or 'network error', error.detail),
+                'error': x_api_error_message(error, plan),
                 'x_status': error.status,
             }
             if plan:

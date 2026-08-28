@@ -62,6 +62,10 @@ class QueryPlanTests(unittest.TestCase):
         recent = backend.build_plan(self.payload(lookback='1d', limit=25))
         recent_params = backend.request_parameters(recent)
         self.assertEqual(recent['endpoint'], '/2/tweets/search/recent')
+        recent_preview = backend.public_plan(recent)
+        self.assertEqual(recent_preview['history_coverage'], 'Recent search · maximum 7 days')
+        self.assertEqual(recent_preview['access_requirement'], 'All X developers')
+        self.assertEqual(recent_preview['endpoint_max_results'], 100)
         self.assertEqual(recent_params['max_results'], 25)
         self.assertEqual(recent_params['sort_order'], 'recency')
         recent_start = datetime.fromisoformat(recent_params['start_time'].replace('Z', '+00:00'))
@@ -72,11 +76,20 @@ class QueryPlanTests(unittest.TestCase):
         archive = backend.build_plan(self.payload(lookback='1m', limit=100, retrieval_order='relevancy'))
         archive_params = backend.request_parameters(archive)
         self.assertEqual(archive['endpoint'], '/2/tweets/search/all')
+        preview = backend.public_plan(archive)
+        self.assertEqual(preview['history_coverage'], 'Full archive endpoint · requested 30 days')
+        self.assertEqual(preview['access_requirement'], 'X pay-per-use or Enterprise')
+        self.assertEqual(preview['endpoint_max_results'], 500)
         self.assertEqual(archive_params['max_results'], 100)
         self.assertEqual(archive_params['sort_order'], 'relevancy')
-        preview = backend.public_plan(archive)
         self.assertIn('start_time=', preview['request_url'])
         self.assertIn('max_results=100', preview['request_url'])
+
+    def test_full_archive_access_error_explains_x_requirement(self):
+        archive = backend.build_plan(self.payload(lookback='1m'))
+        message = backend.x_api_error_message(backend.XApiError(403, 'Forbidden'), archive)
+        self.assertIn('30-day option uses X full-archive search', message)
+        self.assertIn('pay-per-use or Enterprise', message)
 
     def test_link_include_and_exclude_compile_to_x_operators(self):
         included = backend.build_plan(self.payload(filters={'links': 'include'}))
