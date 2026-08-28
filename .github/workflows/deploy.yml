@@ -58,10 +58,16 @@ jobs:
       - name: Check out source
         uses: actions/checkout@v6
 
-      - name: Deploy app.signaldesk.run
-        uses: cloudflare/wrangler-action@v4
+      - name: Set up uv and Python
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          wranglerVersion: '4.127.0'
-          command: deploy
+          python-version: '3.13'
+
+      - name: Install locked Wrangler
+        run: npm ci --ignore-scripts
+
+      - name: Deploy app.signaldesk.run
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: uv run --locked pywrangler deploy
