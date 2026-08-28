@@ -1,10 +1,11 @@
-import os
+import http.client
 import json
 import unittest
+import threading
 from datetime import datetime, timezone
 from unittest.mock import patch
 
-import backend
+import src.core as backend
 
 
 class QueryPlanTests(unittest.TestCase):
@@ -194,8 +195,7 @@ class FilteringTests(unittest.TestCase):
             with self.subTest(expected=expected):
                 self.assertEqual(backend.classify_post(post), expected)
 
-    @patch.dict(os.environ, {'X_BEARER_TOKEN': 'test-token'}, clear=False)
-    @patch('backend.fetch_page')
+    @patch('src.core.fetch_page')
     def test_search_paginates_filters_reposts_sorts_and_adds_sentiment(self, fetch_page):
         def post(identifier, likes, references=None):
             value = {
@@ -230,7 +230,7 @@ class FilteringTests(unittest.TestCase):
             'query': 'crypto.com', 'lookback': '1wk', 'limit': 50,
             'retrieval_order': 'recency', 'sort': 'likes', 'types': ['original'],
             'exclude_brand': True, 'brand_handle': '@cryptocom', 'filters': {},
-        })
+        }, 'test-token')
 
         self.assertEqual(result['meta']['api_pages'], 2)
         self.assertEqual(result['meta']['api_posts_scanned'], 51)
@@ -241,8 +241,7 @@ class FilteringTests(unittest.TestCase):
         likes = [post['public_metrics']['like_count'] for post in result['data']]
         self.assertEqual(likes, sorted(likes, reverse=True))
         self.assertEqual(fetch_page.call_args_list[1].args[2], 'page-2')
-    @patch.dict(os.environ, {'X_BEARER_TOKEN': 'test-token'}, clear=False)
-    @patch('backend.fetch_page')
+    @patch('src.core.fetch_page')
     def test_search_drops_posts_containing_excluded_text(self, fetch_page):
         def post(identifier, text):
             return {
@@ -271,7 +270,7 @@ class FilteringTests(unittest.TestCase):
             'query': 'crypto.com', 'lookback': '1wk', 'limit': 25,
             'retrieval_order': 'recency', 'sort': 'newest', 'types': ['original'],
             'filters': {'exclude_terms': 'sponsored, giveaway'},
-        })
+        }, 'test-token')
 
         self.assertEqual([post['id'] for post in result['data']], ['3'])
         self.assertEqual(result['meta']['dropped_excluded_terms'], 2)
@@ -283,12 +282,10 @@ class FilteringTests(unittest.TestCase):
 
 
 class LLMRefinementTests(unittest.TestCase):
-    @patch.dict(os.environ, {
-        'LLM_API_KEY': 'test-key',
-        'LLM_BASE_URL': 'https://api.openai.com/v1',
-        'LLM_MODEL': 'gpt-5.6-sol',
-    }, clear=False)
-    @patch('backend.call_llm_refinement_chunk')
+    def settings(self):
+        return backend.llm_settings('test-key', 'openai', 'gpt-5.6-sol')
+
+    @patch('src.core.call_llm_refinement_chunk')
     def test_custom_filter_removes_nonmatches_and_ranks_kept_posts(self, call_llm):
         posts = [
             {
@@ -335,7 +332,7 @@ class LLMRefinementTests(unittest.TestCase):
             'topic_query': 'tokenized RWA',
             'posts': posts,
             'users': users,
-        })
+        }, self.settings())
 
         self.assertEqual([post['id'] for post in result['data']], ['strong', 'medium'])
         self.assertEqual(result['data'][0]['signaldesk_llm']['relevance_score'], 96.0)
@@ -346,12 +343,7 @@ class LLMRefinementTests(unittest.TestCase):
             ['author-1', 'author-2'],
         )
 
-    @patch.dict(os.environ, {
-        'LLM_API_KEY': 'test-key',
-        'LLM_BASE_URL': 'https://api.openai.com/v1',
-        'LLM_MODEL': 'gpt-5.6-sol',
-    }, clear=False)
-    @patch('backend.call_llm_refinement_chunk')
+    @patch('src.core.call_llm_refinement_chunk')
     def test_rank_mode_keeps_every_post_and_requires_complete_decisions(self, call_llm):
         posts = [
             {'id': 'low', 'text': 'Low fit', 'public_metrics': {}},
@@ -371,7 +363,7 @@ class LLMRefinementTests(unittest.TestCase):
             'instruction': 'Rank by partnership value',
             'mode': 'rank',
             'posts': posts,
-        })
+        }, self.settings())
         self.assertEqual([post['id'] for post in ranked['data']], ['high', 'low'])
         self.assertEqual(ranked['llm_refinement']['removed_count'], 0)
 
@@ -381,14 +373,9 @@ class LLMRefinementTests(unittest.TestCase):
                 'instruction': 'Rank by partnership value',
                 'mode': 'rank',
                 'posts': posts,
-            })
+            }, self.settings())
 
-    @patch.dict(os.environ, {
-        'LLM_API_KEY': 'test-key',
-        'LLM_BASE_URL': 'https://api.openai.com/v1',
-        'LLM_MODEL': 'gpt-5.6-sol',
-    }, clear=False)
-    @patch('backend.call_llm_refinement_chunk')
+    @patch('src.core.call_llm_refinement_chunk')
     def test_follow_up_uses_conversation_and_reconsiders_every_original_post(self, call_llm):
         posts = [
             {'id': 'previously-kept', 'text': 'Partnership announcement', 'public_metrics': {}},
@@ -411,7 +398,7 @@ class LLMRefinementTests(unittest.TestCase):
             'mode': 'filter',
             'topic_query': 'tokenization',
             'posts': posts,
-        })
+        }, self.settings())
 
         conversation = [
             'Prioritize partnership opportunities',
@@ -429,7 +416,7 @@ class LLMRefinementTests(unittest.TestCase):
             ['previously-missed', 'previously-kept'],
         )
 
-    @patch('backend.urlopen')
+    @patch('src.core.urlopen')
     def test_anthropic_provider_uses_messages_contract(self, urlopen):
         class Response:
             def __enter__(self):
@@ -463,6 +450,169 @@ class LLMRefinementTests(unittest.TestCase):
         self.assertEqual(body['system'], 'System policy')
         self.assertEqual(body['model'], 'claude-fable-5')
         self.assertTrue(result['decisions'][0]['keep'])
+
+
+class HostedServerTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        class QuietHandler(backend.Handler):
+            def log_message(self, *_args):
+                pass
+
+        cls.original_public_origin = backend.PUBLIC_ORIGIN
+        backend.PUBLIC_ORIGIN = ''
+        cls.server = backend.SignalDeskServer(('127.0.0.1', 0), QuietHandler)
+        cls.port = cls.server.server_address[1]
+        cls.origin = 'http://127.0.0.1:{}'.format(cls.port)
+        cls.thread = threading.Thread(target=cls.server.serve_forever, daemon=True)
+        cls.thread.start()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.server.shutdown()
+        cls.server.server_close()
+        cls.thread.join(timeout=2)
+        backend.PUBLIC_ORIGIN = cls.original_public_origin
+
+    def request(self, method, path, payload=None, headers=None):
+        request_headers = dict(headers or {})
+        body = None
+        if payload is not None:
+            body = json.dumps(payload)
+            request_headers.setdefault('Content-Type', 'application/json')
+        connection = http.client.HTTPConnection('127.0.0.1', self.port, timeout=3)
+        try:
+            connection.request(method, path, body=body, headers=request_headers)
+            response = connection.getresponse()
+            raw_body = response.read()
+            content_type = response.getheader('Content-Type') or ''
+            decoded = (
+                json.loads(raw_body.decode('utf-8'))
+                if raw_body and content_type.startswith('application/json')
+                else raw_body
+            )
+            return response.status, response.getheaders(), decoded
+        finally:
+            connection.close()
+
+    def search_payload(self):
+        return {
+            'query': 'signaldesk',
+            'lookback': '1d',
+            'limit': 25,
+            'retrieval_order': 'recency',
+            'sort': 'newest',
+            'types': ['original'],
+            'filters': {},
+        }
+
+    def test_health_discloses_no_server_credentials_and_sets_security_headers(self):
+        status, headers, body = self.request('GET', '/health')
+        header_map = {name.casefold(): value for name, value in headers}
+        self.assertEqual(status, 200)
+        self.assertEqual(body['credential_mode'], 'browser')
+        self.assertNotIn('token_configured', body)
+        self.assertIn("default-src 'self'", header_map['content-security-policy'])
+        self.assertEqual(header_map['cross-origin-resource-policy'], 'same-origin')
+        self.assertNotIn('access-control-allow-origin', header_map)
+
+    def test_static_allowlist_blocks_repository_source(self):
+        allowed_status, _, allowed_body = self.request('GET', '/web-vault.js')
+        blocked_status, _, _ = self.request('GET', '/backend.py')
+        self.assertEqual(allowed_status, 200)
+        self.assertIn(b'signaldesk.browser-vault.v1', allowed_body)
+        self.assertEqual(blocked_status, 404)
+
+    def test_api_requires_same_origin_and_request_scoped_x_credential(self):
+        cross_status, _, cross_body = self.request(
+            'POST',
+            '/api/preview',
+            self.search_payload(),
+            {'Origin': 'https://attacker.example'},
+        )
+        self.assertEqual(cross_status, 403)
+        self.assertIn('Same-origin', cross_body['error'])
+
+        missing_status, _, missing_body = self.request(
+            'POST',
+            '/api/report',
+            self.search_payload(),
+            {'Origin': self.origin},
+        )
+        self.assertEqual(missing_status, 401)
+        self.assertIn('Bearer', missing_body['error'])
+
+        response = {
+            'data': [],
+            'includes': {'users': []},
+            'meta': {},
+            'analytics': {},
+        }
+        with patch('src.core.x_search', return_value=response) as x_search:
+            status, _, body = self.request(
+                'POST',
+                '/api/report',
+                self.search_payload(),
+                {
+                    'Origin': self.origin,
+                    'Authorization': 'Bearer browser-x-token',
+                },
+            )
+        self.assertEqual(status, 200)
+        self.assertTrue(body['ok'])
+        self.assertEqual(x_search.call_args.args[1], 'browser-x-token')
+        self.assertNotIn('browser-x-token', json.dumps(body))
+
+    def test_provider_routes_are_rate_limited_per_forwarded_client(self):
+        headers = {
+            'Origin': self.origin,
+            'X-Forwarded-For': '203.0.113.77',
+        }
+        for _ in range(backend.PROVIDER_RATE_LIMIT):
+            status, _, _ = self.request(
+                'POST',
+                '/api/report',
+                self.search_payload(),
+                headers,
+            )
+            self.assertEqual(status, 401)
+
+        status, response_headers, body = self.request(
+            'POST',
+            '/api/report',
+            self.search_payload(),
+            headers,
+        )
+        header_map = {name.casefold(): value for name, value in response_headers}
+        self.assertEqual(status, 429)
+        self.assertEqual(header_map['retry-after'], str(backend.RATE_WINDOW_SECONDS))
+        self.assertIn('Too many requests', body['error'])
+
+    def test_llm_headers_are_validated_into_fixed_provider_settings(self):
+        response = {
+            'data': [],
+            'includes': {'users': []},
+            'analytics': {},
+            'llm_refinement': {'applied': True},
+        }
+        with patch('src.core.llm_refine_results', return_value=response) as refine:
+            status, _, body = self.request(
+                'POST',
+                '/api/llm-filter',
+                {'posts': []},
+                {
+                    'Origin': self.origin,
+                    'Authorization': 'Bearer browser-ai-key',
+                    'X-SignalDesk-LLM-Provider': 'anthropic',
+                    'X-SignalDesk-LLM-Model': 'claude-fable-5',
+                },
+            )
+        self.assertEqual(status, 200)
+        self.assertTrue(body['ok'])
+        settings = refine.call_args.args[1]
+        self.assertEqual(settings['key'], 'browser-ai-key')
+        self.assertEqual(settings['provider'], 'anthropic')
+        self.assertEqual(settings['base_url'], 'https://api.anthropic.com/v1')
 
 
 if __name__ == '__main__':

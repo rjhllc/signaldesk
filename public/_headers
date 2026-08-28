@@ -1,0 +1,11 @@
+/*
+  Cache-Control: no-store, no-cache, must-revalidate
+  Pragma: no-cache
+  Content-Security-Policy: default-src 'self'; img-src 'self' https://pbs.twimg.com https://abs.twimg.com data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'
+  Permissions-Policy: camera=(), geolocation=(), microphone=(), payment=(), usb=()
+  Referrer-Policy: no-referrer
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Resource-Policy: same-origin
+  Strict-Transport-Security: max-age=31536000; includeSubDomains

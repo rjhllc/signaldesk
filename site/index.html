@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark">
   <meta name="theme-color" content="#07070a">
-  <meta name="description" content="SignalDesk is a local-first desktop application for focused research using live X data.">
+  <meta name="description" content="SignalDesk is a private browser-based workspace for focused research using live X data.">
   <meta property="og:title" content="SignalDesk — Find the signal in the feed">
-  <meta property="og:description" content="Local-first desktop research using live X data.">
+  <meta property="og:description" content="Live X research in your browser, with encrypted local credential storage and no SignalDesk account.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://signaldesk.run/">
   <meta property="og:image" content="https://signaldesk.run/assets/social-card.png">
@@ -20,29 +20,11 @@
   <title>SignalDesk — Find the signal in the feed</title>
   <link rel="canonical" href="https://signaldesk.run/">
   <link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/styles.css">
-  <script src="/app.js" defer></script>
+  <link rel="stylesheet" href="/styles.9a1e5cfeea.css">
+  <script src="/app.403add5323.js" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
-  <div class="signal-field" aria-hidden="true">
-    <svg viewBox="0 0 1440 1000" preserveAspectRatio="xMidYMid slice" role="presentation">
-      <defs>
-        <linearGradient id="arc-gradient" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#4adfff"/>
-          <stop offset="0.48" stop-color="#9278ff"/>
-          <stop offset="1" stop-color="#f14fc9"/>
-        </linearGradient>
-        <pattern id="ring-pixels" width="18" height="18" patternUnits="userSpaceOnUse">
-          <rect x="2" y="3" width="2.2" height="2.2" fill="#fff" opacity="0.56"/>
-          <rect x="12" y="11" width="1.3" height="1.3" fill="#fff" opacity="0.26"/>
-        </pattern>
-      </defs>
-      <circle cx="1550" cy="1100" r="940" fill="none" stroke="url(#ring-pixels)" stroke-width="180" opacity="0.92"/>
-      <circle cx="1550" cy="1100" r="770" fill="none" stroke="url(#arc-gradient)" stroke-width="100" opacity="0.96"/>
-      <circle cx="1550" cy="1100" r="690" fill="url(#ring-pixels)" opacity="0.62"/>
-    </svg>
-  </div>
 
   <div class="page-shell">
     <header class="site-header">
@@ -51,7 +33,7 @@
         <span>SignalDesk</span>
       </a>
       <nav aria-label="Main navigation">
-        <a href="https://github.com/rjhllc/signaldesk/blob/main/PRIVACY.md" rel="noopener">Privacy</a>
+        <a href="https://app.signaldesk.run">Application</a>
         <a href="https://github.com/rjhllc/signaldesk" rel="noopener">GitHub ↗</a>
         <div class="support-menu" data-support-menu>
           <button class="support-trigger" type="button" aria-expanded="false" aria-controls="support-popover">Support</button>
@@ -66,28 +48,66 @@
     </header>
 
     <main id="main" class="hero">
-      <div class="hero-copy">
-        <p class="eyebrow">SignalDesk // Desktop X research</p>
-        <h1>Find the signal<br><span>in the feed.</span></h1>
-        <p class="intro">Search live X data, curate results in natural language, and keep the original evidence intact. Local-first, with no telemetry.</p>
-
-        <div class="download-selector">
-          <div class="platform-tabs" role="tablist" aria-label="Choose your operating system">
-            <button type="button" role="tab" data-platform-select="windows" aria-selected="false">Windows</button>
-            <button type="button" role="tab" data-platform-select="macos" aria-selected="false">macOS</button>
-            <button type="button" role="tab" data-platform-select="linux" aria-selected="false">Linux</button>
+      <div class="hero-stage">
+        <div class="signal-field" aria-hidden="true">
+          <svg viewBox="0 0 1440 1000" preserveAspectRatio="xMidYMid slice" role="presentation">
+            <defs>
+              <linearGradient id="arc-gradient" x1="8%" y1="0%" x2="92%" y2="100%">
+                <stop offset="0" stop-color="#4de8ff"/>
+                <stop offset="0.22" stop-color="#46c8ff"/>
+                <stop offset="0.4" stop-color="#398cff"/>
+                <stop offset="0.58" stop-color="#875cff"/>
+                <stop offset="0.78" stop-color="#f34fd8"/>
+                <stop offset="1" stop-color="#ff5e78"/>
+              </linearGradient>
+            </defs>
+            <circle class="ring-clearance" cx="1550" cy="1100" r="770" fill="none" stroke="#000" stroke-width="160"/>
+            <g class="gradient-ring">
+              <circle cx="1550" cy="1100" r="770" fill="none" stroke="url(#arc-gradient)" stroke-width="100" opacity="0.96"/>
+            </g>
+          </svg>
+        </div>
+      <div class="hero-copy" data-liquid-glass>
+        <div class="color-reveal" aria-hidden="true">
+          <div class="reveal-field">
+            <svg viewBox="0 0 1440 1000" preserveAspectRatio="xMidYMid slice" role="presentation">
+              <defs>
+                <linearGradient id="arc-gradient-reveal" x1="8%" y1="0%" x2="92%" y2="100%">
+                  <stop offset="0" stop-color="#4de8ff"/>
+                  <stop offset="0.22" stop-color="#46c8ff"/>
+                  <stop offset="0.4" stop-color="#398cff"/>
+                  <stop offset="0.58" stop-color="#875cff"/>
+                  <stop offset="0.78" stop-color="#f34fd8"/>
+                  <stop offset="1" stop-color="#ff5e78"/>
+                </linearGradient>
+              </defs>
+              <g class="gradient-ring">
+                <circle cx="1550" cy="1100" r="770" fill="none" stroke="url(#arc-gradient-reveal)" stroke-width="100" opacity="0.96"/>
+              </g>
+            </svg>
           </div>
-          <a id="primary-download" class="download-bar" href="https://github.com/rjhllc/signaldesk/releases/latest" data-download-primary>
-            <span class="download-prompt" aria-hidden="true">↓</span>
-            <span class="download-copy"><small data-download-label>Latest release</small><strong data-download-filename>Choose a platform above</strong></span>
-            <b>Download</b>
+        </div>
+        <h1>Find the signal<br><span>in the feed.</span></h1>
+        <p class="intro">Search live X data, curate results in natural language, and keep the original evidence intact. SignalDesk now runs in the browser—no install and no SignalDesk account.</p>
+
+        <div class="launch-panel">
+          <div class="launch-facts" aria-label="Application privacy and access">
+            <span><strong>Browser-based</strong><small>Always the current version</small></span>
+            <span><strong>Encrypted locally</strong><small>Credentials saved in this browser</small></span>
+            <span><strong>Bring your keys</strong><small>X and optional AI providers</small></span>
+          </div>
+          <a class="launch-bar" href="https://app.signaldesk.run">
+            <span class="launch-prompt" aria-hidden="true">→</span>
+            <span class="launch-copy"><small>SignalDesk web application</small><strong>Open your private research workspace</strong></span>
+            <b>Launch application</b>
           </a>
         </div>
 
-        <div class="release-meta">
-          <p id="platform-note" aria-live="polite">Available for Windows, macOS, and Linux.</p>
-          <a href="https://github.com/rjhllc/signaldesk/releases/latest" rel="noopener">Release details ↗</a>
+        <div class="launch-meta">
+          <p>Saved credentials stay encrypted in this browser. Requested searches pass through SignalDesk's HTTPS relay and are not retained there.</p>
+          <a href="https://github.com/rjhllc/signaldesk/blob/main/PRIVACY.md" rel="noopener">How data moves ↗</a>
         </div>
+      </div>
       </div>
     </main>
 

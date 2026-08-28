@@ -17,7 +17,6 @@ const FILTER_DEFAULTS = {
 };
 const SECTION_ORDER_STORAGE = 'signaldesk.advancedFilterOrder.v1';
 const SECTION_OPEN_STORAGE = 'signaldesk.advancedFilterOpen.v1';
-const SAVED_SEARCHES_STORAGE = 'signaldesk.savedSearches.v1';
 const MAX_SAVED_SEARCHES = 50;
 const MAX_CLOSED_REFINEMENT_VIEWS = 10;
 const LLM_MODELS = Object.freeze({
@@ -57,7 +56,7 @@ const elements = {
   settingsIntro: element('#settings-intro'),
   settingsError: element('#settings-error'),
   dataLocation: element('#data-location'),
-  openDataLocation: element('#open-data-location'),
+  forgetBrowser: element('#forget-browser'),
   xBearerToken: element('#x-bearer-token'),
   llmApiKey: element('#llm-api-key'),
   llmProvider: element('#llm-provider'),
@@ -66,15 +65,6 @@ const elements = {
   llmCustomModel: element('#llm-custom-model'),
   clearLlm: element('#clear-llm'),
   clearLlmRow: element('#clear-llm-row'),
-  updateDialog: element('#update-dialog'),
-  updateTitle: element('#update-title'),
-  updateDetail: element('#update-detail'),
-  updateProgress: element('#update-progress'),
-  updatePercent: element('#update-percent'),
-  updateProgressBar: element('#update-progress-bar'),
-  updateError: element('#update-error'),
-  updateLater: element('#update-later'),
-  updatePrimary: element('#update-primary'),
   query: element('#query'),
   lookback: element('#lookback'),
   limit: element('#limit'),
@@ -144,9 +134,8 @@ let llmInFlight = false;
 let llmConfigured = false;
 let llmProgressTimer = null;
 let draggedSection = null;
-let desktopConfiguration = null;
+let browserConfiguration = null;
 let settingsRequired = false;
-let currentUpdateState = { status: 'idle', currentVersion: APP_BUILD };
 let savedSearchesCache = [];
 let searchController = null;
 let llmController = null;
@@ -179,7 +168,9 @@ function formatDate(value) {
 function safeImageUrl(value) {
   try {
     const url = new URL(String(value));
-    return url.protocol === 'https:' ? url.href : '';
+    return url.protocol === 'https:' && ['pbs.twimg.com', 'abs.twimg.com'].includes(url.hostname)
+      ? url.href
+      : '';
   } catch (_) {
     return '';
   }
@@ -427,10 +418,10 @@ function resetRefinementWorkspace() {
 
 function updateLlmControls() {
   const hasPosts = Boolean(sourceResponse?.data?.length);
-  elements.llmApply.disabled = !llmConfigured || !hasPosts || llmInFlight;
+  elements.llmApply.disabled = !backendReady || !llmConfigured || !hasPosts || llmInFlight;
   elements.llmAction.disabled = llmInFlight;
   elements.llmInstruction.disabled = llmInFlight;
-  elements.search.disabled = !backendReady || searchInFlight || llmInFlight;
+  updateSearchAvailability();
   elements.resultsTabs.querySelectorAll('[data-close-results-view]').forEach((button) => {
     button.disabled = llmInFlight;
   });
@@ -482,53 +473,28 @@ function resetLlmProgress() {
   });
 }
 
-function fallbackSavedSearches() {
-  try {
-    const parsed = JSON.parse(localStorage.getItem(SAVED_SEARCHES_STORAGE) || '[]');
-    return Array.isArray(parsed) ? parsed.slice(0, MAX_SAVED_SEARCHES) : [];
-  } catch (_) {
-    return [];
-  }
-}
 
 async function initializeSavedSearches() {
-  const api = desktopApi();
-  if (api?.getSavedSearches) {
-    try {
-      const result = await api.getSavedSearches();
-      savedSearchesCache = Array.isArray(result?.items) ? result.items : [];
-      const legacy = fallbackSavedSearches();
-      if (!savedSearchesCache.length && legacy.length && !result?.error) {
-        const migrated = await api.saveSavedSearches(legacy);
-        if (migrated?.ok) {
-          savedSearchesCache = migrated.items || legacy;
-          localStorage.removeItem(SAVED_SEARCHES_STORAGE);
-        }
-      }
-      if (result?.error) {
-        elements.savedSearchFeedback.textContent = result.error;
-        elements.savedSearchFeedback.dataset.state = 'error';
-      }
-    } catch (_) {
-      savedSearchesCache = [];
+  try {
+    const result = await runtimeApi().getSavedSearches();
+    savedSearchesCache = Array.isArray(result?.items) ? result.items : [];
+    if (result?.error) {
+      elements.savedSearchFeedback.textContent = result.error;
+      elements.savedSearchFeedback.dataset.state = 'error';
     }
-  } else {
-    savedSearchesCache = fallbackSavedSearches();
+  } catch (error) {
+    savedSearchesCache = [];
+    elements.savedSearchFeedback.textContent = error.message || String(error);
+    elements.savedSearchFeedback.dataset.state = 'error';
   }
   renderSavedSearches();
 }
 
 async function storeSavedSearches(searches) {
   const next = searches.slice(0, MAX_SAVED_SEARCHES);
-  const api = desktopApi();
-  if (api?.saveSavedSearches) {
-    const result = await api.saveSavedSearches(next);
-    if (!result?.ok) throw new Error(result?.error || 'SignalDesk could not save searches');
-    savedSearchesCache = Array.isArray(result.items) ? result.items : next;
-  } else {
-    localStorage.setItem(SAVED_SEARCHES_STORAGE, JSON.stringify(next));
-    savedSearchesCache = next;
-  }
+  const result = await runtimeApi().saveSavedSearches(next);
+  if (!result?.ok) throw new Error(result?.error || 'SignalDesk could not save searches');
+  savedSearchesCache = Array.isArray(result.items) ? result.items : next;
 }
 
 function currentSearchSnapshot() {
@@ -595,7 +561,7 @@ async function saveCurrentSearch() {
     searches.unshift({ id, name: name.slice(0, 80), savedAt: new Date().toISOString(), snapshot });
     await storeSavedSearches(searches);
     elements.savedSearchName.value = '';
-    elements.savedSearchFeedback.textContent = `Saved “${name.slice(0, 80)}” persistently on this computer.`;
+    elements.savedSearchFeedback.textContent = `Saved “${name.slice(0, 80)}” encrypted in this browser.`;
     elements.savedSearchFeedback.dataset.state = 'success';
     renderSavedSearches();
   } catch (error) {
@@ -667,8 +633,13 @@ async function deleteSavedSearch(id) {
   }
 }
 
-function desktopApi() {
-  return window.signaldeskDesktop || null;
+function runtimeApi() {
+  if (!window.signaldeskRuntime) throw new Error('Encrypted browser storage failed to load');
+  return window.signaldeskRuntime;
+}
+
+function updateSearchAvailability() {
+  elements.search.disabled = !backendReady || !browserConfiguration?.xConfigured || searchInFlight || llmInFlight;
 }
 function resetSignalDesk() {
   searchController?.abort();
@@ -702,7 +673,7 @@ function resetSignalDesk() {
   elements.diagnostics.innerHTML = '';
   elements.sentimentOverview.innerHTML = '';
   elements.export.disabled = true;
-  elements.search.disabled = !backendReady;
+  updateSearchAvailability();
   elements.search.querySelector('span').textContent = 'Search';
   updateResultsTabs();
   updateLlmControls();
@@ -711,102 +682,6 @@ function resetSignalDesk() {
   elements.query.focus();
 }
 
-function showUpdateDialog() {
-  if (settingsRequired || !elements.settingsDialog.classList.contains('hidden')) return;
-  elements.updateDialog.classList.remove('hidden');
-  document.body.classList.add('update-open');
-  window.setTimeout(() => elements.updatePrimary.focus(), 0);
-}
-
-function hideUpdateDialog() {
-  elements.updateDialog.classList.add('hidden');
-  document.body.classList.remove('update-open');
-}
-
-function renderUpdateState(state) {
-  if (!state || typeof state !== 'object') return;
-  currentUpdateState = state;
-  const version = String(state.version || '');
-  const currentVersion = String(state.currentVersion || APP_BUILD);
-  elements.updateError.textContent = '';
-  elements.updateProgress.classList.add('hidden');
-  elements.updatePrimary.disabled = false;
-  elements.updateLater.disabled = false;
-  elements.updateLater.textContent = 'Later';
-  if (state.status === 'available') {
-    elements.updateTitle.textContent = `SignalDesk ${version} is available`;
-    elements.updateDetail.textContent = `You are running ${currentVersion}. Download the official GitHub release now?`;
-    elements.updatePrimary.textContent = 'Download update';
-    showUpdateDialog();
-    return;
-  }
-  if (state.status === 'downloading') {
-    const percent = Math.max(0, Math.min(100, Number(state.percent) || 0));
-    elements.updateTitle.textContent = `Downloading SignalDesk ${version}`;
-    elements.updateDetail.textContent = 'The app remains usable while the update downloads.';
-    elements.updateProgress.classList.remove('hidden');
-    elements.updateProgress.setAttribute('aria-valuenow', String(Math.round(percent)));
-    elements.updatePercent.textContent = `${Math.round(percent)}%`;
-    elements.updateProgressBar.style.width = `${percent}%`;
-    elements.updatePrimary.textContent = 'Downloading…';
-    elements.updatePrimary.disabled = true;
-    elements.updateLater.textContent = 'Hide';
-    showUpdateDialog();
-    return;
-  }
-  if (state.status === 'downloaded') {
-    elements.updateTitle.textContent = `SignalDesk ${version} is ready`;
-    elements.updateDetail.textContent = 'Restart SignalDesk to replace the old application files. Your encrypted credentials and settings remain in place.';
-    elements.updatePrimary.textContent = 'Restart and install';
-    showUpdateDialog();
-    return;
-  }
-  if (state.status === 'error' && !elements.updateDialog.classList.contains('hidden')) {
-    elements.updateTitle.textContent = 'SignalDesk could not update';
-    elements.updateDetail.textContent = 'The current version is unchanged and remains usable.';
-    elements.updateError.textContent = String(state.message || 'Update failed');
-    elements.updatePrimary.textContent = 'Close';
-    showUpdateDialog();
-  }
-}
-
-async function handleUpdatePrimary() {
-  const api = desktopApi();
-  if (!api) return;
-  elements.updateError.textContent = '';
-  if (currentUpdateState.status === 'available') {
-    elements.updatePrimary.disabled = true;
-    const result = await api.downloadUpdate();
-    if (!result?.ok) {
-      elements.updateError.textContent = result?.error || 'Update download failed';
-      elements.updatePrimary.disabled = false;
-    }
-    return;
-  }
-  if (currentUpdateState.status === 'downloaded') {
-    elements.updatePrimary.disabled = true;
-    elements.updatePrimary.textContent = 'Restarting…';
-    const result = await api.installUpdate();
-    if (!result?.ok) {
-      elements.updateError.textContent = result?.error || 'Update install failed';
-      elements.updatePrimary.disabled = false;
-      elements.updatePrimary.textContent = 'Restart and install';
-    }
-    return;
-  }
-  hideUpdateDialog();
-}
-
-async function initializeUpdaterUi() {
-  const api = desktopApi();
-  if (!api?.getUpdateState || !api?.onUpdateState) return;
-  api.onUpdateState(renderUpdateState);
-  try {
-    renderUpdateState(await api.getUpdateState());
-  } catch (_) {
-    // Update checks must never block the local research workflow.
-  }
-}
 
 function configureProviderModels(provider, selectedModel = '') {
   const models = LLM_MODELS[provider] || LLM_MODELS.openai;
@@ -844,8 +719,19 @@ function handleLlmModelChange() {
   if (elements.llmModel.value === 'custom') elements.llmCustomModel.focus();
 }
 
+function applyBrowserConfiguration(configuration) {
+  browserConfiguration = configuration;
+  llmConfigured = Boolean(configuration?.llmConfigured);
+  const providerLabel = configuration?.llmProvider === 'anthropic' ? 'Anthropic' : 'OpenAI';
+  elements.llmRefinerModel.textContent = llmConfigured
+    ? `${providerLabel} · ${configuration.llmModel}`
+    : 'AI not configured · add a provider key in Credentials';
+  updateLlmControls();
+  updateSearchAvailability();
+}
+
 function populateSettings(configuration) {
-  desktopConfiguration = configuration;
+  applyBrowserConfiguration(configuration);
   elements.xBearerToken.value = '';
   elements.xBearerToken.required = !configuration.xConfigured;
   elements.xBearerToken.placeholder = configuration.xConfigured
@@ -860,14 +746,14 @@ function populateSettings(configuration) {
   elements.clearLlm.checked = false;
   elements.clearLlmRow.classList.toggle('hidden', !configuration.llmApiKeyConfigured);
   elements.settingsIntro.textContent = configuration.xConfigured
-    ? 'Update the saved credentials below. Blank secret fields keep their current values.'
+    ? 'Update the encrypted credentials below. Blank secret fields keep their current values.'
     : 'Paste the X API Bearer Token used for searches. This is the only required credential.';
-  elements.dataLocation.textContent = configuration.dataLocation || 'Available in the packaged desktop app';
-  elements.settingsError.textContent = configuration.configurationError || '';
+  elements.dataLocation.textContent = configuration.dataLocation || 'Encrypted storage in this browser profile';
+  elements.settingsError.textContent = '';
 }
 
 function showSettings(required = false) {
-  settingsRequired = required || !desktopConfiguration?.xConfigured;
+  settingsRequired = required || !browserConfiguration?.xConfigured;
   elements.settingsClose.classList.toggle('hidden', settingsRequired);
   elements.settingsCancel.classList.toggle('hidden', settingsRequired);
   elements.settingsDialog.classList.remove('hidden');
@@ -881,79 +767,83 @@ function closeSettings() {
   document.body.classList.remove('settings-open');
   elements.settingsError.textContent = '';
   elements.settingsButton.focus();
-  if (['available', 'downloading', 'downloaded'].includes(currentUpdateState.status)) {
-    renderUpdateState(currentUpdateState);
-  }
 }
 
 async function openSettings(required = false) {
-  const api = desktopApi();
-  if (!api) return;
   elements.settingsButton.classList.remove('hidden');
   try {
-    const configuration = await api.getConfiguration();
+    const configuration = await runtimeApi().getConfiguration();
     populateSettings(configuration);
     showSettings(required);
   } catch (error) {
-    desktopConfiguration = { xConfigured: false };
+    applyBrowserConfiguration({ xConfigured: false, llmConfigured: false });
     elements.settingsError.textContent = error.message || String(error);
     showSettings(true);
   }
 }
-async function openLocalDataFolder() {
-  const api = desktopApi();
-  if (!api?.openDataLocation) return;
+
+async function forgetBrowserData() {
+  if (!window.confirm('Remove encrypted credentials, saved searches, and SignalDesk settings from this browser?')) return;
+  const previousLabel = elements.forgetBrowser.textContent;
+  elements.forgetBrowser.disabled = true;
+  elements.forgetBrowser.textContent = 'Forgetting…';
   elements.settingsError.textContent = '';
-  const result = await api.openDataLocation();
-  if (!result?.ok) {
-    elements.settingsError.textContent = result?.error || 'SignalDesk could not open the local data folder';
+  try {
+    const result = await runtimeApi().forgetBrowser();
+    if (!result?.ok) throw new Error(result?.error || 'SignalDesk could not clear this browser');
+    window.location.reload();
+  } catch (error) {
+    elements.settingsError.textContent = error.message || String(error);
+    elements.forgetBrowser.disabled = false;
+    elements.forgetBrowser.textContent = previousLabel;
   }
 }
 
-async function saveDesktopSettings(event) {
+async function saveBrowserSettings(event) {
   event.preventDefault();
-  const api = desktopApi();
-  if (!api) return;
   const previousLabel = elements.settingsSave.textContent;
   elements.settingsSave.disabled = true;
-  elements.settingsSave.textContent = 'Saving…';
+  elements.settingsSave.textContent = 'Encrypting…';
   elements.settingsError.textContent = '';
   try {
     const model = selectedLlmModel();
     if (elements.llmApiKey.value.trim() && !model) throw new Error('Choose or enter an AI model');
-    const result = await api.saveConfiguration({
+    const result = await runtimeApi().saveConfiguration({
       xBearerToken: elements.xBearerToken.value,
       llmApiKey: elements.llmApiKey.value,
       llmProvider: elements.llmProvider.value,
       llmModel: model,
       clearLlm: elements.clearLlm.checked,
     });
-    if (!result?.ok || !result.url) throw new Error(result?.error || 'SignalDesk could not restart');
-    window.location.replace(result.url);
+    if (!result?.ok || !result.configuration) {
+      throw new Error(result?.error || 'SignalDesk could not save encrypted credentials');
+    }
+    populateSettings(result.configuration);
+    settingsRequired = false;
+    closeSettings();
+    if (backendReady) {
+      setConnection('live', 'Secure relay ready', `Web build ${APP_BUILD}`);
+    }
   } catch (error) {
     elements.settingsError.textContent = error.message || String(error);
+  } finally {
     elements.settingsSave.disabled = false;
     elements.settingsSave.textContent = previousLabel;
   }
 }
 
-async function initializeDesktopSettings() {
-  const api = desktopApi();
-  if (!api) return;
+async function initializeBrowserSettings() {
   elements.settingsButton.classList.remove('hidden');
   try {
-    const configuration = await api.getConfiguration();
+    const configuration = await runtimeApi().getConfiguration();
     populateSettings(configuration);
-    if (!configuration.xConfigured || configuration.configurationError) {
-      showSettings(!configuration.xConfigured);
-    }
+    if (!configuration.xConfigured) showSettings(true);
   } catch (error) {
-    desktopConfiguration = { xConfigured: false };
+    applyBrowserConfiguration({ xConfigured: false, llmConfigured: false });
     elements.settingsError.textContent = error.message || String(error);
     showSettings(true);
   }
 }
-
 
 async function checkHealth() {
   try {
@@ -962,33 +852,25 @@ async function checkHealth() {
     if (!response.ok || !data.ok) throw new Error(data.error || `HTTP ${response.status}`);
     if (data.build !== APP_BUILD) {
       backendReady = false;
-      elements.search.disabled = true;
+      updateSearchAvailability();
       setConnection('error', 'Stale backend blocked', `Browser ${APP_BUILD} · server ${data.build || 'unknown'}`);
       return;
     }
-    if (!data.token_configured) {
-      backendReady = false;
-      elements.search.disabled = true;
-      setConnection('error', 'X token unavailable', `Backend ${data.build}`);
-      if (desktopApi()) void openSettings(true);
-      return;
+    if (data.credential_mode !== 'browser') {
+      throw new Error('The server is not configured for browser credentials');
     }
-    llmConfigured = Boolean(data.llm_configured);
-    const providerLabel = data.llm_provider === 'anthropic' ? 'Anthropic' : 'OpenAI';
-    elements.llmRefinerModel.textContent = llmConfigured
-      ? `${providerLabel} · ${data.llm_model}`
-      : 'AI not configured · add a provider key in Credentials';
-    updateLlmControls();
     backendReady = true;
-    elements.search.disabled = false;
-    setConnection('live', 'Connected to X', `Backend ${data.build}`);
+    updateSearchAvailability();
+    setConnection(
+      'live',
+      'Secure relay ready',
+      browserConfiguration?.xConfigured ? `Web build ${data.build}` : 'Add credentials to search',
+    );
   } catch (error) {
     backendReady = false;
-    llmConfigured = false;
-    elements.search.disabled = true;
-    elements.llmRefinerModel.textContent = 'Backend unavailable';
+    updateSearchAvailability();
     updateLlmControls();
-    setConnection('error', 'Backend unavailable', error.message);
+    setConnection('error', 'Secure relay unavailable', error.message);
   }
 }
 
@@ -1312,7 +1194,10 @@ async function applyLlmRefinement() {
     const response = await fetch('/api/llm-filter', {
       method: 'POST',
       signal: controller.signal,
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(await runtimeApi().getRequestHeaders('llm')),
+      },
       body: JSON.stringify({
         instruction,
         instruction_history: instructionHistory,
@@ -1485,6 +1370,10 @@ async function runSearch() {
     const response = await fetch('/api/report', {
       method: 'POST',
       signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(await runtimeApi().getRequestHeaders('x')),
+      },
       body: JSON.stringify(payload),
     });
     const data = await readJson(response);
@@ -1504,7 +1393,7 @@ async function runSearch() {
   } finally {
     searchInFlight = false;
     if (searchController === controller) searchController = null;
-    elements.search.disabled = !backendReady;
+    updateSearchAvailability();
     elements.sort.disabled = false;
     elements.search.querySelector('span').textContent = 'Search';
     updateLlmControls();
@@ -1625,14 +1514,12 @@ elements.llmInstruction.addEventListener('keydown', (event) => {
 elements.query.addEventListener('keydown', (event) => { if (event.key === 'Enter') runSearch(); });
 elements.brandHandle.addEventListener('keydown', (event) => { if (event.key === 'Enter') runSearch(); });
 elements.settingsButton.addEventListener('click', () => { void openSettings(false); });
-elements.openDataLocation.addEventListener('click', () => { void openLocalDataFolder(); });
+elements.forgetBrowser.addEventListener('click', () => { void forgetBrowserData(); });
 elements.llmProvider.addEventListener('change', handleLlmProviderChange);
 elements.llmModel.addEventListener('change', handleLlmModelChange);
-elements.settingsForm.addEventListener('submit', saveDesktopSettings);
+elements.settingsForm.addEventListener('submit', saveBrowserSettings);
 elements.settingsClose.addEventListener('click', closeSettings);
 elements.settingsCancel.addEventListener('click', closeSettings);
-elements.updateLater.addEventListener('click', hideUpdateDialog);
-elements.updatePrimary.addEventListener('click', () => { void handleUpdatePrimary(); });
 document.addEventListener('keydown', (event) => {
   const target = event.target;
   const editingText = target instanceof HTMLElement
@@ -1650,13 +1537,16 @@ document.addEventListener('keydown', (event) => {
     closeSavedSearches();
   } else if (!elements.settingsDialog.classList.contains('hidden')) {
     closeSettings();
-  } else if (!elements.updateDialog.classList.contains('hidden')) {
-    hideUpdateDialog();
   }
 });
 
+async function initializeApplication() {
+  await Promise.all([
+    initializeBrowserSettings(),
+    initializeSavedSearches(),
+  ]);
+  await checkHealth();
+}
+
 initializeFilterSections();
-void initializeSavedSearches();
-void initializeDesktopSettings();
-void initializeUpdaterUi();
-void checkHealth();
+void initializeApplication();

@@ -4,7 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
+  <meta name="description" content="SignalDesk live X research application">
   <title>SignalDesk</title>
+  <link rel="icon" href="assets/signaldesk-icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="styles.css?v=0.1.0-alpha.1">
 </head>
 <body>
@@ -244,7 +246,7 @@
   <div id="settings-dialog" class="settings-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="settings-title" aria-describedby="settings-intro">
     <section class="settings-card">
       <div class="settings-header">
-        <div><p class="eyebrow">DESKTOP SETUP</p><h2 id="settings-title">SignalDesk credentials</h2></div>
+        <div><p class="eyebrow">BROWSER SETUP</p><h2 id="settings-title">SignalDesk credentials</h2></div>
         <button id="settings-close" class="icon-button hidden" type="button" aria-label="Close credentials">×</button>
       </div>
       <p id="settings-intro" class="settings-intro">Paste the X API Bearer Token used for live searches. This is the only required credential.</p>
@@ -252,7 +254,7 @@
         <label class="settings-field" for="x-bearer-token">
           <span>X Bearer Token <b>Required</b></span>
           <input id="x-bearer-token" type="password" maxlength="10000" autocomplete="off" spellcheck="false" placeholder="Paste your X API Bearer Token">
-          <small>Encrypted for your operating-system account and kept outside the installed application files.</small>
+          <small>Encrypted in this browser. Sent through SignalDesk's HTTPS relay only when you run a search; the relay forwards it to X without retaining it.</small>
         </label>
         <details class="optional-settings">
           <summary><span>Optional AI result filtering</span><small>Use OpenAI or Anthropic after results are pulled.</small></summary>
@@ -264,7 +266,7 @@
             <label class="settings-field" for="llm-api-key">
               <span>API key</span>
               <input id="llm-api-key" type="password" maxlength="10000" autocomplete="off" spellcheck="false" placeholder="Paste the provider API key">
-              <small>Encrypted with the same desktop credential storage as your X token and sent only to the selected provider.</small>
+              <small>Encrypted in this browser. Sent through the HTTPS relay only for an AI review, then forwarded to the selected provider without retention.</small>
             </label>
             <label class="settings-field" for="llm-model">
               <span>Model</span>
@@ -280,37 +282,21 @@
         </details>
         <section class="local-data-card" aria-labelledby="local-data-title">
           <div>
-            <strong id="local-data-title">Local app data</strong>
-            <code id="data-location">Available in the packaged desktop app</code>
-            <small>Encrypted credentials, saved searches, and application settings stay in this folder.</small>
+            <strong id="local-data-title">Encrypted browser data</strong>
+            <code id="data-location">Loading this browser's encrypted storage…</code>
+            <small>Credentials and saved searches persist only in this browser profile. Clearing site data removes them.</small>
           </div>
-          <button id="open-data-location" class="secondary-button" type="button">Open data folder</button>
+          <button id="forget-browser" class="secondary-button danger-button" type="button">Forget this browser</button>
         </section>
         <p id="settings-error" class="settings-error" role="alert"></p>
         <div class="settings-actions">
           <button id="settings-cancel" class="secondary-button hidden" type="button">Cancel</button>
-          <button id="settings-save" class="save-settings-button" type="submit">Save and start SignalDesk</button>
+          <button id="settings-save" class="save-settings-button" type="submit">Save credentials</button>
         </div>
       </form>
     </section>
   </div>
-  <div id="update-dialog" class="update-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="update-title" aria-describedby="update-detail">
-    <section class="update-card">
-      <p class="eyebrow">SOFTWARE UPDATE</p>
-      <h2 id="update-title">A SignalDesk update is available</h2>
-      <p id="update-detail">A newer version can be downloaded from the official SignalDesk GitHub Release.</p>
-      <div id="update-progress" class="update-progress hidden" role="progressbar" aria-label="Update download progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-        <div><span>Downloading update</span><strong id="update-percent">0%</strong></div>
-        <i><b id="update-progress-bar"></b></i>
-      </div>
-      <p class="update-privacy">The updater never sends your X token, LLM key, searches, or results. GitHub receives only normal update-check and download request metadata.</p>
-      <p id="update-error" class="settings-error" role="alert"></p>
-      <div class="update-actions">
-        <button id="update-later" class="secondary-button" type="button">Later</button>
-        <button id="update-primary" class="save-settings-button" type="button">Download update</button>
-      </div>
-    </section>
-  </div>
+  <script src="web-vault.js?v=0.1.0-alpha.1" defer></script>
   <script src="app.js?v=0.1.0-alpha.1" defer></script>
 </body>
 </html>

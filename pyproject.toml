@@ -1,0 +1,13 @@
+[project]
+name = "signaldesk"
+version = "0.1.0a1"
+description = "Hosted SignalDesk web application for focused X research"
+readme = "README.md"
+requires-python = ">=3.13.2"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "workers-py>=1.16.7,<2",
+    "workers-runtime-sdk",
+]

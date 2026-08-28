@@ -2,29 +2,18 @@
   "name": "signaldesk",
   "version": "0.1.0-alpha.1",
   "private": true,
-  "desktopName": "SignalDesk",
-  "description": "Local-first SignalDesk desktop application for private X research",
+  "description": "Hosted SignalDesk web application for focused X research",
   "author": "RJH LLC",
   "license": "UNLICENSED",
-  "main": "desktop/main.cjs",
   "scripts": {
-    "setup:ubuntu": "bash prepare_ubuntu.sh",
-    "start": "electron .",
-    "test": "python3 -m unittest -v test_backend.py && bun test desktop/configuration.test.cjs",
-    "release:windows": "bun scripts/build-windows.mjs --publish",
-    "build:windows": "bun scripts/build-windows.mjs",
-    "build:unix": "bun scripts/build-unix.mjs",
-    "release:unix": "bun scripts/build-unix.mjs --publish"
-  },
-  "engines": {
-    "node": ">=22.12.0"
+    "start": "python3 backend.py",
+    "dev": "uv run pywrangler dev",
+    "test": "python3 -m unittest -v test_backend.py",
+    "deploy": "npm run deploy:site && npm run deploy:app",
+    "deploy:site": "wrangler deploy --config wrangler.site.jsonc",
+    "deploy:app": "uv run pywrangler deploy"
   },
   "devDependencies": {
-    "electron": "44.0.0",
-    "electron-builder": "^26.15.3",
-    "fflate": "^0.8.3"
-  },
-  "dependencies": {
-    "electron-updater": "^6.8.9"
+    "wrangler": "^4.127.0"
   }
 }

@@ -1,68 +1,84 @@
 # SignalDesk Privacy
 
-**Last updated: August 25, 2026**
+**Last updated: August 28, 2026**
 
-SignalDesk is a local-first desktop application. RJH LLC does not operate a SignalDesk account system, analytics service, advertising service, crash-reporting service, or data-collection endpoint.
+SignalDesk is a hosted web application. RJH LLC does not operate a SignalDesk account system, analytics service, advertising service, or crash-reporting service.
 
-## Data SignalDesk stores locally
+## Data saved in the browser
 
-SignalDesk stores only the information needed to operate on the current computer:
+SignalDesk stores the following data under the `app.signaldesk.run` browser origin:
 
-- X API and optional LLM credentials, encrypted for the current operating-system account by Electron's `safeStorage` API.
-- Saved search definitions, including the query, selected filters, toggles, sort order, and optional AI instruction, encrypted in SignalDesk's local application-data folder.
-- Application update state and normal installed application files.
+- The X API Bearer Token and optional LLM API key, encrypted with AES-GCM.
+- The selected LLM provider and model, inside the same encrypted credential record.
+- Saved search definitions, including queries, filters, toggles, sort order, and optional AI instruction, in a separate encrypted record.
+- Advanced-filter layout preferences in ordinary local storage. These preferences contain section order and open/closed state, not credentials.
 
-The exact folder appears in **Credentials → Local app data** inside the packaged application. Select **Open data folder** to open it directly.
+Web Crypto creates a non-extractable encryption key and IndexedDB stores it separately from the encrypted records. The vault normally persists between visits in the same browser profile. SignalDesk does not sync or recover it.
 
-Default locations are:
+Search results and AI result tabs are held in browser memory. CSV files are created in the browser only when the user explicitly exports them.
 
-| Platform | Local data folder |
-|---|---|
-| Windows | `%APPDATA%\\SignalDesk` |
-| macOS | `~/Library/Application Support/SignalDesk` |
-| Linux | `$XDG_CONFIG_HOME/SignalDesk`, or `~/.config/SignalDesk` when `XDG_CONFIG_HOME` is unset |
+Selecting **Forget this browser** clears the encrypted vault and layout preferences. Clearing browser site data has the same effect. Private-browsing storage may be deleted automatically when the private session ends.
 
+## Data processed by the SignalDesk relay
 
-Search results are held in application memory while SignalDesk is running. CSV exports are written only when the user explicitly downloads them.
+X does not accept the browser preflight required for an authenticated search. SignalDesk therefore uses one same-origin HTTPS relay at `app.signaldesk.run` for X and the supported AI providers.
 
-Uninstalling may preserve the local application-data directory so credentials and saved searches survive an update or reinstall. Users can remove SignalDesk's local application data through their operating system when permanent deletion is required.
+When the user runs an X search, the browser decrypts and sends these values to the relay:
+
+- The user's X Bearer Token.
+- The search query, selected filters, requested time range, result limit, retrieval order, and sort choice.
+
+The relay forwards the request to X, processes the returned public posts and author metadata, and returns the report to that browser.
+
+When the user explicitly requests AI review, the browser sends these values to the relay:
+
+- The configured AI provider key, provider name, and model ID.
+- The original search-result posts and relevant public author metadata.
+- The original search topic and cumulative review-instruction conversation.
+
+The relay forwards that request to the selected AI provider and returns the validated result.
+
+The SignalDesk application has no credential, query, result, or conversation database. It holds request data in process memory only for the request and does not intentionally write request bodies or authorization headers to logs. Provider credentials are supplied per request and are not configured on the server. For abuse control, the relay keeps per-IP request timestamps in a sliding one-minute window in volatile memory; stale entries are discarded as traffic continues, and the state is never persisted.
+
+Hosting and network providers necessarily process connection metadata such as IP address, timestamps, TLS traffic, and request size. Infrastructure administrators can technically access data while it is being processed. Browser-local encryption does not make in-transit data opaque to the relay.
 
 ## Data sent to third parties
 
-SignalDesk communicates only with services required for features the user invokes:
-
 ### X
 
-When the user runs a search, SignalDesk sends the generated query and required request parameters directly to the configured official X API endpoint. X returns posts and public author metadata used to render the report.
+X receives the Bearer Token, generated X query, requested fields, time bounds, result limits, sort order supported by X, and normal network metadata. X's terms, privacy policy, access tiers, and billing apply.
 
-### Configured LLM provider
+### OpenAI or Anthropic
 
-AI review is optional and is available only after an X search returns posts. When the user creates an AI tab or follows up on one, SignalDesk sends the original search-result posts, relevant public author metadata, the original search topic, and the cumulative review-instruction conversation directly to the selected OpenAI or Anthropic endpoint. A follow-up reconsiders those existing posts; it does not run another X search.
+The selected provider receives its API key, model ID, posts being reviewed, relevant public author metadata, the search topic, the cumulative review conversation, and normal network metadata. AI review is optional and occurs only after the user requests it.
 
 SignalDesk never sends the X Bearer Token to an AI provider or an AI provider key to X.
 
-### GitHub Releases
+### Application hosting and deployment
 
-Packaged Windows builds periodically check the public SignalDesk GitHub release feed for software updates. GitHub receives normal network request metadata such as the requesting IP address and user agent. Update requests do not include credentials, saved searches, search queries, or results. SignalDesk asks before downloading an update and before restarting to install it.
+Cloudflare serves both `signaldesk.run` and `app.signaldesk.run`, executes the same-origin relay, and receives normal request and infrastructure metadata. GitHub Actions deploys repository revisions to production; deployment jobs do not receive browser credentials, searches, or results.
 
 ## Data RJH LLC receives
 
-RJH LLC does not receive SignalDesk credentials, saved searches, queries, posts, AI instructions, exports, or application usage events through the software. There is no SignalDesk telemetry pipeline.
+RJH LLC does not receive application data through an account, analytics, advertising, telemetry, or support pipeline. RJH LLC operates the relay infrastructure and therefore may have operational access to request data in transit and basic infrastructure metadata, even though the application does not persist that data.
 
 If a user voluntarily sends a support email, issue report, or diagnostic file, RJH LLC receives only the information that user chooses to provide through that separate channel.
 
-## Network and application security
+## Security properties and limits
 
-- The packaged backend listens only on an ephemeral loopback address.
-- The desktop renderer uses context isolation, sandboxing, disabled Node.js integration, and a restrictive Content Security Policy.
-- External navigation is blocked inside the application and HTTPS links open in the system browser.
-- Release packaging rejects credentials, environment files, private keys, and unexpected application files.
-- User secrets are never included in Windows installers or release artifacts.
+- API routes require a same-origin browser request and do not enable cross-origin access.
+- Provider base URLs are fixed server-side to X, OpenAI, and Anthropic.
+- The application Worker exposes only the `public` asset directory; repository source and deployment files are not web-accessible.
+- Responses use a restrictive Content Security Policy, no-referrer policy, same-origin resource policy, and other browser hardening headers.
+- The application loads no third-party scripts.
+- Cloudflare terminates HTTPS and executes the relay in its Workers runtime.
+- Preview requests are limited per client network, and provider requests are limited per supplied credential, within each Cloudflare location.
+- User credentials are never configured as Worker secrets or included in repository revisions and deployment jobs.
+
+The browser vault protects credentials at rest from casual inspection of browser files. It cannot protect credentials when the browser profile is unlocked and compromised by a malicious extension, device malware, developer-tools access, or a future same-origin script vulnerability.
 
 ## Third-party terms
 
-Use of X, an LLM provider, and GitHub is subject to those providers' privacy policies and terms. SignalDesk does not control their processing of requests sent directly to them.
+Use of X, OpenAI, and Anthropic remains subject to each provider's terms, privacy policy, billing, and API restrictions. SignalDesk is not affiliated with those providers.
 
-## Contact
-
-Privacy questions may be sent to [support@signaldesk.run](mailto:support@signaldesk.run). Report security vulnerabilities through GitHub's private vulnerability reporting form. Do not include API keys, bearer tokens, saved credential files, or confidential search results in email or a public issue.
+Privacy questions may be sent to [support@signaldesk.run](mailto:support@signaldesk.run). Report security vulnerabilities through GitHub's private vulnerability reporting form. Do not include credentials, saved searches, confidential results, or unredacted request data in email or a public issue.

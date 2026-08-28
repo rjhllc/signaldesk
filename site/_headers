@@ -1,15 +1,15 @@
 /*
   Content-Security-Policy: default-src 'self'; base-uri 'self'; connect-src 'none'; font-src 'self'; form-action 'none'; frame-ancestors 'none'; img-src 'self' data:; object-src 'none'; script-src 'self'; style-src 'self'; upgrade-insecure-requests
   Permissions-Policy: camera=(), geolocation=(), microphone=(), payment=(), usb=()
-  Referrer-Policy: strict-origin-when-cross-origin
+  Referrer-Policy: no-referrer
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
 
 /assets/*
   Cache-Control: public, max-age=86400
 
-/styles.css
-  Cache-Control: public, max-age=3600
+/styles.9a1e5cfeea.css
+  Cache-Control: public, max-age=31536000, immutable
 
-/app.js
-  Cache-Control: public, max-age=3600
+/app.403add5323.js
+  Cache-Control: public, max-age=31536000, immutable
