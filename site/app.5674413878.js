@@ -51,7 +51,7 @@ let targetY = 0;
 let particleData = new Float32Array(0);
 
 function buildParticleData() {
-  const spacing = fieldWidth < 640 ? 24 : 28;
+  const spacing = fieldWidth < 640 ? 28 : 32;
   const columns = Math.max(0, Math.ceil((fieldWidth - spacing / 2) / spacing));
   const rows = Math.max(0, Math.ceil((fieldHeight - spacing / 2) / spacing));
   const data = new Float32Array(columns * rows * 3);
