@@ -11,7 +11,7 @@ All notable changes to SignalDesk are documented here.
 - Set 1 hour as the default time range.
 - Updated the application and X API documentation for the new recent-search windows.
 - Simplified the marketing message to “filter the slop” with a direct description of clarified and curated X searches and filters.
-- Replaced the liquid-glass, desaturated hero overlay and static dot grid with a clean full-color hero and a viewport-wide magnetic particle field: round depth-varied dots stay visible while short rearward tails stretch toward mouse or touch input.
+- Replaced the liquid-glass, desaturated hero overlay and static dot grid with a clean full-color hero and a viewport-wide magnetic particle field: dots keep constant brightness, stretch symmetrically with distance, and rise in a smooth local wave beneath mouse or touch input.
 - Centered the hero at every viewport size, locked mobile to a non-scrolling viewport, and restored GitHub navigation with opaque mobile button backgrounds.
 
 ### Fixed

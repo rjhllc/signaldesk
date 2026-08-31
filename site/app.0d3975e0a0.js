@@ -49,7 +49,8 @@ let targetY = 0;
 function drawMagneticField() {
   if (!magneticField || !fieldContext) return;
   const spacing = fieldWidth < 640 ? 24 : 28;
-  const reach = Math.hypot(fieldWidth, fieldHeight) * 1.15;
+  const diagonal = Math.hypot(fieldWidth, fieldHeight) || 1;
+  const waveRadius = fieldWidth < 640 ? 92 : 124;
   fieldContext.clearRect(0, 0, fieldWidth, fieldHeight);
   fieldContext.lineCap = 'round';
 
@@ -58,32 +59,23 @@ function drawMagneticField() {
       const dx = pointerX - x;
       const dy = pointerY - y;
       const distance = Math.hypot(dx, dy);
-      const proximity = Math.max(0, 1 - distance / reach);
-      const influence = pointerActive ? 0.08 + proximity ** 1.7 * 0.92 : 0;
-      const depth = 0.78 + (Math.sin(x * 0.019 + y * 0.023) + 1) * 0.12;
-      const angle = pointerActive ? Math.atan2(dy, dx) : 0;
-      const stretch = pointerActive ? (0.45 + influence * 4.4) * depth : 0;
+      const distanceRatio = Math.min(1, distance / diagonal);
+      const depth = 0.82 + (Math.sin(x * 0.019 + y * 0.023) + 1) * 0.09;
+      const angle = pointerActive && distance > 0.01 ? Math.atan2(dy, dx) : 0;
+      const length = pointerActive ? (1.45 + distanceRatio * 7) * depth : 0.01;
+      const wavePosition = pointerActive ? Math.max(0, 1 - distance / waveRadius) : 0;
+      const wave = wavePosition * wavePosition * (3 - 2 * wavePosition);
+      const centerY = y - wave * 10 * depth;
+      const halfLength = length / 2;
       const directionX = Math.cos(angle);
       const directionY = Math.sin(angle);
-      const headX = x + directionX * stretch * 0.35;
-      const headY = y + directionY * stretch * 0.35;
 
-      if (pointerActive) {
-        const tailX = x - directionX * stretch * 0.65;
-        const tailY = y - directionY * stretch * 0.65;
-        fieldContext.lineWidth = 0.7 + depth * 0.35;
-        fieldContext.strokeStyle = `rgba(255, 255, 255, ${(0.06 + influence * 0.2).toFixed(3)})`;
-        fieldContext.beginPath();
-        fieldContext.moveTo(tailX, tailY);
-        fieldContext.lineTo(headX, headY);
-        fieldContext.stroke();
-      }
-
-      const dotRadius = 0.62 + depth * 0.22 + influence * 0.16;
-      fieldContext.fillStyle = `rgba(255, 255, 255, ${(0.16 + depth * 0.08 + influence * 0.25).toFixed(3)})`;
+      fieldContext.lineWidth = 1.22 + depth * 0.24 + wave * 0.12;
+      fieldContext.strokeStyle = `rgba(255, 255, 255, ${(0.19 + depth * 0.09).toFixed(3)})`;
       fieldContext.beginPath();
-      fieldContext.arc(headX, headY, dotRadius, 0, Math.PI * 2);
-      fieldContext.fill();
+      fieldContext.moveTo(x - directionX * halfLength, centerY - directionY * halfLength);
+      fieldContext.lineTo(x + directionX * halfLength, centerY + directionY * halfLength);
+      fieldContext.stroke();
     }
   }
 }
@@ -115,11 +107,6 @@ function trackMagneticPointer(event) {
   queueMagneticField();
 }
 
-function releaseTouchPointer(event) {
-  if (event.pointerType !== 'touch') return;
-  pointerActive = false;
-  drawMagneticField();
-}
 
 
 function resizeMagneticField() {
@@ -139,11 +126,5 @@ if (magneticField && fieldContext) {
   if (!reducedMotion) {
     window.addEventListener('pointerdown', trackMagneticPointer, { passive: true });
     window.addEventListener('pointermove', trackMagneticPointer, { passive: true });
-    window.addEventListener('pointerup', releaseTouchPointer, { passive: true });
-    window.addEventListener('pointercancel', releaseTouchPointer, { passive: true });
-    document.documentElement.addEventListener('mouseleave', () => {
-      pointerActive = false;
-      drawMagneticField();
-    });
   }
 }
