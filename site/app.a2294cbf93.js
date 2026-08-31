@@ -50,7 +50,7 @@ function drawMagneticField() {
   if (!magneticField || !fieldContext) return;
   const spacing = fieldWidth < 640 ? 24 : 28;
   const diagonal = Math.hypot(fieldWidth, fieldHeight) || 1;
-  const waveRadius = fieldWidth < 640 ? 92 : 124;
+  const waveRadius = fieldWidth < 640 ? 110 : 145;
   fieldContext.clearRect(0, 0, fieldWidth, fieldHeight);
   fieldContext.lineCap = 'round';
 
@@ -62,19 +62,33 @@ function drawMagneticField() {
       const distanceRatio = Math.min(1, distance / diagonal);
       const depth = 0.82 + (Math.sin(x * 0.019 + y * 0.023) + 1) * 0.09;
       const angle = pointerActive && distance > 0.01 ? Math.atan2(dy, dx) : 0;
-      const length = pointerActive ? (1.45 + distanceRatio * 7) * depth : 0.01;
+      const length = pointerActive ? (1.45 + distanceRatio * 7) * depth * 1.125 : 0.01;
       const wavePosition = pointerActive ? Math.max(0, 1 - distance / waveRadius) : 0;
       const wave = wavePosition * wavePosition * (3 - 2 * wavePosition);
-      const centerY = y - wave * 10 * depth;
+      const centerY = y - wave * 16 * depth;
       const halfLength = length / 2;
       const directionX = Math.cos(angle);
       const directionY = Math.sin(angle);
+      const tailX = x - directionX * halfLength;
+      const tailY = centerY - directionY * halfLength;
+      const headX = x + directionX * halfLength;
+      const headY = centerY + directionY * halfLength;
+      const opacity = 0.19 + depth * 0.09;
 
-      fieldContext.lineWidth = 1.22 + depth * 0.24 + wave * 0.12;
-      fieldContext.strokeStyle = `rgba(255, 255, 255, ${(0.19 + depth * 0.09).toFixed(3)})`;
+      fieldContext.lineWidth = 1.22 + depth * 0.24 + wave * 0.22;
+      if (pointerActive) {
+        const gradient = fieldContext.createLinearGradient(tailX, tailY, headX, headY);
+        gradient.addColorStop(0, 'rgba(0, 0, 0, 0.96)');
+        gradient.addColorStop(0.28, 'rgba(0, 0, 0, 0.55)');
+        gradient.addColorStop(0.58, `rgba(255, 255, 255, ${(opacity * 0.58).toFixed(3)})`);
+        gradient.addColorStop(1, `rgba(255, 255, 255, ${opacity.toFixed(3)})`);
+        fieldContext.strokeStyle = gradient;
+      } else {
+        fieldContext.strokeStyle = `rgba(255, 255, 255, ${opacity.toFixed(3)})`;
+      }
       fieldContext.beginPath();
-      fieldContext.moveTo(x - directionX * halfLength, centerY - directionY * halfLength);
-      fieldContext.lineTo(x + directionX * halfLength, centerY + directionY * halfLength);
+      fieldContext.moveTo(tailX, tailY);
+      fieldContext.lineTo(headX, headY);
       fieldContext.stroke();
     }
   }
