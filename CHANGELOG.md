@@ -10,6 +10,8 @@ All notable changes to SignalDesk are documented here.
 - Replaced the previous time ranges with 15 minutes, 1 hour, 4 hours, 12 hours, and 1 day.
 - Set 1 hour as the default time range.
 - Updated the application and X API documentation for the new recent-search windows.
+- Simplified the marketing message to “Filter the slop easily” with a direct description of clarified and curated X searches and filters.
+- Replaced the liquid-glass, desaturated hero overlay and static dot grid with a clean full-color hero and cursor-responsive magnetic line field.
 
 ### Fixed
 
