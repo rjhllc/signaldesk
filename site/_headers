@@ -8,8 +8,8 @@
 /assets/*
   Cache-Control: public, max-age=86400
 
-/styles.32aea511d0.css
+/styles.3a73c88271.css
   Cache-Control: public, max-age=31536000, immutable
 
-/app.5674413878.js
+/app.ad0b4074d6.js
   Cache-Control: public, max-age=31536000, immutable

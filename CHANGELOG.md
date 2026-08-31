@@ -11,10 +11,10 @@ All notable changes to SignalDesk are documented here.
 - Set 1 hour as the default time range.
 - Updated the application and X API documentation for the new recent-search windows.
 - Simplified the marketing message to “filter the slop” with a direct description of clarified and curated X searches and filters.
-- Replaced the liquid-glass, desaturated hero overlay and static dot grid with a clean full-color hero and a viewport-wide magnetic particle field: dots brighten near the pointer, stretch symmetrically with distance, fade to black at their rear edge, and rise in a pronounced local wave beneath mouse or touch input.
-- Restored a solid opaque black disk and clearance band beneath the light ring so magnetic particles cannot show through its interior or boundary, and reduced particle density by roughly 25%.
+- Replaced the liquid-glass, desaturated hero overlay and static dot grid with a steady particle conveyor: the dense input field moves right into the filter while a five-dot curated stream exits on the black side.
+- Kept the light wheel’s interior and clearance band fully opaque, and erased input pixels at the same circular boundary so particles cannot appear beneath the filter.
 - Centered the hero at every viewport size, locked mobile to a non-scrolling viewport, and restored GitHub navigation with opaque mobile button backgrounds.
-- Optimized the magnetic renderer with precomputed particle geometry, batched fade strokes, a capped device-pixel ratio, one render per pointer frame, and an active centered state on first load.
+- Optimized the particle conveyor by pre-rendering its dense input field once, moving a cached bitmap at 30 frames per second, capping device-pixel ratio at 1.5, and disabling continuous animation when reduced motion is requested.
 
 ### Fixed
 
