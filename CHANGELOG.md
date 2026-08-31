@@ -1,0 +1,21 @@
+# Changelog
+
+All notable changes to SignalDesk are documented here.
+
+## Unreleased — 2026-08-31
+
+### Changed
+
+- Made SignalDesk web-app-only and removed the public GitHub download/repository link from the marketing site.
+- Replaced the previous time ranges with 15 minutes, 1 hour, 4 hours, 12 hours, and 1 day.
+- Set 1 hour as the default time range.
+- Updated the application and X API documentation for the new recent-search windows.
+
+### Fixed
+
+- Send an exact `start_time` for every selected search window.
+- Enforce the selected boundary after retrieval in both the local server and Cloudflare Worker runtimes, preventing older posts or posts without a valid `created_at` timestamp from appearing in results.
+
+### Removed
+
+- Removed the downloadable `v0.1.0-alpha.1` GitHub release and its tag because SignalDesk is distributed only as a hosted web application.

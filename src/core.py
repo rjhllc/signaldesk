@@ -50,9 +50,11 @@ SORTS = {
 }
 RETRIEVAL_ORDERS = {'recency': 'Recency', 'relevancy': 'Relevancy'}
 LOOKBACKS = {
-    '1d': (1, '/2/tweets/search/recent'),
-    '1wk': (7, '/2/tweets/search/recent'),
-    '1m': (30, '/2/tweets/search/all'),
+    '15m': (15 * 60, '15 minutes'),
+    '1h': (60 * 60, '1 hour'),
+    '4h': (4 * 60 * 60, '4 hours'),
+    '12h': (12 * 60 * 60, '12 hours'),
+    '1d': (24 * 60 * 60, '1 day'),
 }
 POST_FIELDS = (
     'created_at,public_metrics,author_id,lang,conversation_id,in_reply_to_user_id,'
@@ -456,8 +458,18 @@ def build_filter_clauses(value):
     return clauses, applied
 
 
-def start_time(days):
-    value = datetime.now(timezone.utc) - timedelta(days=days) + timedelta(seconds=5)
+def parse_utc_timestamp(value):
+    try:
+        parsed = datetime.fromisoformat(str(value).replace('Z', '+00:00'))
+    except (TypeError, ValueError):
+        return None
+    if parsed.tzinfo is None:
+        return None
+    return parsed.astimezone(timezone.utc)
+
+
+def start_time(duration_seconds):
+    value = datetime.now(timezone.utc) - timedelta(seconds=duration_seconds)
     return value.isoformat(timespec='seconds').replace('+00:00', 'Z')
 
 
@@ -468,10 +480,11 @@ def build_plan(payload):
     if re.search(r'(?<!-)\bis:retweet\b', topic_query, re.IGNORECASE):
         raise ValueError('Native reposts are fixed off; remove is:retweet from the base query')
 
-    lookback = str(payload.get('lookback', '1wk'))
+    lookback = str(payload.get('lookback', '1h'))
     if lookback not in LOOKBACKS:
-        raise ValueError('Lookback must be 1d, 1wk, or 1m')
-    days, endpoint = LOOKBACKS[lookback]
+        raise ValueError('Lookback must be 15m, 1h, 4h, 12h, or 1d')
+    duration_seconds, lookback_label = LOOKBACKS[lookback]
+    endpoint = '/2/tweets/search/recent'
 
     try:
         limit = int(payload.get('limit', 50))
@@ -494,8 +507,6 @@ def build_plan(payload):
 
     filters = payload.get('filters') or {}
     excluded_terms = normalize_exclusion_terms(filters.get('exclude_terms'))
-    if endpoint.endswith('/all') and str(filters.get('entity') or '').strip():
-        raise ValueError('The entity: operator is available only with 1d or 1wk recent search')
 
     filter_clauses, applied_filters = build_filter_clauses(filters)
     clauses = ['(' + topic_query + ')', type_filter(types)]
@@ -504,7 +515,7 @@ def build_plan(payload):
         clauses.append('-from:' + excluded_handle)
         applied_filters.append('brand author excluded: @' + excluded_handle)
     query_used = ' '.join(clauses)
-    query_limit = 1024 if endpoint.endswith('/all') else 512
+    query_limit = 512
     if len(query_used) > query_limit:
         raise ValueError(
             'The generated X query is too long: {} of {} characters'.format(
@@ -517,8 +528,9 @@ def build_plan(payload):
         'query_used': query_used,
         'query_limit': query_limit,
         'lookback': lookback,
-        'days': days,
-        'start_time': start_time(days),
+        'duration_seconds': duration_seconds,
+        'lookback_label': lookback_label,
+        'start_time': start_time(duration_seconds),
         'endpoint': endpoint,
         'limit': limit,
         'sort': sort,
@@ -1009,18 +1021,8 @@ def x_error_detail(body):
     return '; '.join(messages)[:800] or json.dumps(decoded)[:800]
 
 
-def x_api_error_message(error, plan=None):
-    message = 'X API {}: {}'.format(error.status or 'network error', error.detail)
-    if (
-        plan
-        and plan['endpoint'].endswith('/all')
-        and error.status in {402, 403}
-    ):
-        message += (
-            '. The 30-day option uses X full-archive search, which requires '
-            'pay-per-use or Enterprise access and available X credits'
-        )
-    return message
+def x_api_error_message(error):
+    return 'X API {}: {}'.format(error.status or 'network error', error.detail)
 
 
 def request_parameters(plan, page_size=None, pagination_token=None):
@@ -1087,17 +1089,9 @@ def public_plan(plan):
         'topic_query': plan['topic_query'],
         'endpoint': plan['endpoint'],
         'lookback': plan['lookback'],
-        'history_coverage': (
-            'Full archive endpoint · requested 30 days'
-            if plan['endpoint'].endswith('/all')
-            else 'Recent search · maximum 7 days'
-        ),
-        'access_requirement': (
-            'X pay-per-use or Enterprise'
-            if plan['endpoint'].endswith('/all')
-            else 'All X developers'
-        ),
-        'endpoint_max_results': 500 if plan['endpoint'].endswith('/all') else 100,
+        'history_coverage': 'Recent search · requested {}'.format(plan['lookback_label']),
+        'access_requirement': 'All X developers',
+        'endpoint_max_results': 100,
         'start_time': plan['start_time'],
         'requested_limit': plan['limit'],
         'first_page_max_results': parameters['max_results'],
@@ -1136,6 +1130,10 @@ def x_search(payload, token, plan=None):
     dropped_excluded_terms = 0
     pagination_token = None
     next_token = None
+    window_start = parse_utc_timestamp(plan['start_time'])
+    if window_start is None:
+        raise ValueError('Search plan has an invalid start time')
+    dropped_before_start_time = 0
 
     for _ in range(MAX_API_PAGES):
         remaining = plan['limit'] - len(accepted)
@@ -1155,6 +1153,10 @@ def x_search(payload, token, plan=None):
                 duplicates_dropped += 1
                 continue
             seen_ids.add(post_id)
+            created_at = parse_utc_timestamp(post.get('created_at'))
+            if created_at is None or created_at < window_start:
+                dropped_before_start_time += 1
+                continue
             if contains_excluded_term(post.get('text'), plan['excluded_terms']):
                 dropped_excluded_terms += 1
                 continue
@@ -1188,6 +1190,7 @@ def x_search(payload, token, plan=None):
         'dropped_unselected_types': dropped_unselected_types,
         'duplicates_dropped': duplicates_dropped,
         'dropped_excluded_terms': dropped_excluded_terms,
+        'dropped_before_start_time': dropped_before_start_time,
         'more_available': bool(next_token),
         'partial': len(displayed_posts) < plan['limit'],
         'sort_scope': (
@@ -1445,7 +1448,7 @@ class Handler(SimpleHTTPRequestHandler):
             body = {
                 'ok': False,
                 'build': BUILD_VERSION,
-                'error': x_api_error_message(error, plan),
+                'error': x_api_error_message(error),
                 'x_status': error.status,
             }
             if plan:

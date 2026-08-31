@@ -2,7 +2,7 @@ import http.client
 import json
 import unittest
 import threading
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
 
 import src.core as backend
@@ -12,7 +12,7 @@ class QueryPlanTests(unittest.TestCase):
     def payload(self, **overrides):
         value = {
             'query': 'crypto.com',
-            'lookback': '1wk',
+            'lookback': '1h',
             'limit': 50,
             'retrieval_order': 'recency',
             'sort': 'likes',
@@ -58,38 +58,36 @@ class QueryPlanTests(unittest.TestCase):
                 query = backend.build_plan(self.payload(types=types))['query_used']
                 self.assertIn('-is:retweet', query)
 
-    def test_lookback_and_limit_are_real_request_parameters(self):
-        recent = backend.build_plan(self.payload(lookback='1d', limit=25))
-        recent_params = backend.request_parameters(recent)
-        self.assertEqual(recent['endpoint'], '/2/tweets/search/recent')
-        recent_preview = backend.public_plan(recent)
-        self.assertEqual(recent_preview['history_coverage'], 'Recent search · maximum 7 days')
-        self.assertEqual(recent_preview['access_requirement'], 'All X developers')
-        self.assertEqual(recent_preview['endpoint_max_results'], 100)
-        self.assertEqual(recent_params['max_results'], 25)
-        self.assertEqual(recent_params['sort_order'], 'recency')
-        recent_start = datetime.fromisoformat(recent_params['start_time'].replace('Z', '+00:00'))
-        age_hours = (datetime.now(timezone.utc) - recent_start).total_seconds() / 3600
-        self.assertGreater(age_hours, 23.9)
-        self.assertLess(age_hours, 24.1)
+    def test_lookback_options_set_real_recent_search_boundaries(self):
+        expected_durations = {
+            '15m': 15 * 60,
+            '1h': 60 * 60,
+            '4h': 4 * 60 * 60,
+            '12h': 12 * 60 * 60,
+            '1d': 24 * 60 * 60,
+        }
+        for lookback, expected_seconds in expected_durations.items():
+            with self.subTest(lookback=lookback):
+                plan = backend.build_plan(self.payload(lookback=lookback, limit=25))
+                parameters = backend.request_parameters(plan)
+                preview = backend.public_plan(plan)
+                start = datetime.fromisoformat(parameters['start_time'].replace('Z', '+00:00'))
+                age_seconds = (datetime.now(timezone.utc) - start).total_seconds()
 
-        archive = backend.build_plan(self.payload(lookback='1m', limit=100, retrieval_order='relevancy'))
-        archive_params = backend.request_parameters(archive)
-        self.assertEqual(archive['endpoint'], '/2/tweets/search/all')
-        preview = backend.public_plan(archive)
-        self.assertEqual(preview['history_coverage'], 'Full archive endpoint · requested 30 days')
-        self.assertEqual(preview['access_requirement'], 'X pay-per-use or Enterprise')
-        self.assertEqual(preview['endpoint_max_results'], 500)
-        self.assertEqual(archive_params['max_results'], 100)
-        self.assertEqual(archive_params['sort_order'], 'relevancy')
-        self.assertIn('start_time=', preview['request_url'])
-        self.assertIn('max_results=100', preview['request_url'])
+                self.assertEqual(plan['endpoint'], '/2/tweets/search/recent')
+                self.assertEqual(plan['duration_seconds'], expected_seconds)
+                self.assertAlmostEqual(age_seconds, expected_seconds, delta=2)
+                self.assertEqual(parameters['max_results'], 25)
+                self.assertEqual(parameters['sort_order'], 'recency')
+                self.assertEqual(preview['access_requirement'], 'All X developers')
+                self.assertEqual(preview['endpoint_max_results'], 100)
+                self.assertIn('start_time=', preview['request_url'])
 
-    def test_full_archive_access_error_explains_x_requirement(self):
-        archive = backend.build_plan(self.payload(lookback='1m'))
-        message = backend.x_api_error_message(backend.XApiError(403, 'Forbidden'), archive)
-        self.assertIn('30-day option uses X full-archive search', message)
-        self.assertIn('pay-per-use or Enterprise', message)
+    def test_retired_long_lookbacks_are_rejected(self):
+        for lookback in ('1wk', '1m'):
+            with self.subTest(lookback=lookback):
+                with self.assertRaisesRegex(ValueError, '15m, 1h, 4h, 12h, or 1d'):
+                    backend.build_plan(self.payload(lookback=lookback))
 
     def test_link_include_and_exclude_compile_to_x_operators(self):
         included = backend.build_plan(self.payload(filters={'links': 'include'}))
@@ -107,9 +105,6 @@ class QueryPlanTests(unittest.TestCase):
         self.assertIn('-"sponsored"', plan['query_used'])
 
 
-    def test_entity_operator_is_rejected_for_full_archive_search(self):
-        with self.assertRaisesRegex(ValueError, 'available only'):
-            backend.build_plan(self.payload(lookback='1m', filters={'entity': 'Crypto.com'}))
 
     def test_structured_filters_compile_to_official_x_operators(self):
         filters = {
@@ -148,9 +143,20 @@ class QueryPlanTests(unittest.TestCase):
             'min_replies': '2',
             'min_reposts': '3',
         }
-        entity = filters.pop('entity')
-        query = backend.build_plan(self.payload(lookback='1m', filters=filters))['query_used']
-        query += ' ' + backend.build_plan(self.payload(filters={'entity': entity}))['query_used']
+        point_keys = {'longitude', 'latitude', 'radius', 'radius_unit'}
+        bounding_keys = {'bounding_west', 'bounding_south', 'bounding_east', 'bounding_north'}
+        queries = [
+            backend.build_plan(self.payload(filters={key: value}))['query_used']
+            for key, value in filters.items()
+            if key not in point_keys | bounding_keys
+        ]
+        queries.append(backend.build_plan(
+            self.payload(filters={key: filters[key] for key in point_keys})
+        )['query_used'])
+        queries.append(backend.build_plan(
+            self.payload(filters={key: filters[key] for key in bounding_keys})
+        )['query_used'])
+        query = ' '.join(queries)
         expected = [
             'has:links', 'has:images', '-has:hashtags', 'has:cashtags', 'has:mentions',
             'has:geo', 'is:verified', '-is:nullcast', 'lang:iw',
@@ -214,7 +220,7 @@ class FilteringTests(unittest.TestCase):
             value = {
                 'id': str(identifier),
                 'author_id': 'author-1',
-                'created_at': '2026-08-10T{:02d}:00:00Z'.format(identifier % 24),
+                'created_at': datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'),
                 'text': 'Great post {}'.format(identifier),
                 'lang': 'en',
                 'public_metrics': {
@@ -240,7 +246,7 @@ class FilteringTests(unittest.TestCase):
             {'data': second_page, 'includes': {'users': [user]}, 'meta': {}},
         ]
         result = backend.x_search({
-            'query': 'crypto.com', 'lookback': '1wk', 'limit': 50,
+            'query': 'crypto.com', 'lookback': '1h', 'limit': 50,
             'retrieval_order': 'recency', 'sort': 'likes', 'types': ['original'],
             'exclude_brand': True, 'brand_handle': '@cryptocom', 'filters': {},
         }, 'test-token')
@@ -260,7 +266,7 @@ class FilteringTests(unittest.TestCase):
             return {
                 'id': str(identifier),
                 'author_id': 'author-1',
-                'created_at': '2026-08-10T0{}:00:00Z'.format(identifier),
+                'created_at': datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'),
                 'text': text,
                 'lang': 'en',
                 'public_metrics': {},
@@ -280,7 +286,7 @@ class FilteringTests(unittest.TestCase):
             'meta': {},
         }
         result = backend.x_search({
-            'query': 'crypto.com', 'lookback': '1wk', 'limit': 25,
+            'query': 'crypto.com', 'lookback': '1h', 'limit': 25,
             'retrieval_order': 'recency', 'sort': 'newest', 'types': ['original'],
             'filters': {'exclude_terms': 'sponsored, giveaway'},
         }, 'test-token')
@@ -290,6 +296,39 @@ class FilteringTests(unittest.TestCase):
         query = fetch_page.call_args.args[1]['query_used']
         self.assertIn('-"sponsored"', query)
         self.assertIn('-"giveaway"', query)
+    @patch('src.core.fetch_page')
+    def test_search_drops_posts_before_selected_window(self, fetch_page):
+        plan = backend.build_plan({
+            'query': 'crypto.com', 'lookback': '15m', 'limit': 25,
+            'retrieval_order': 'recency', 'sort': 'newest', 'types': ['original'],
+            'filters': {},
+        })
+        window_start = backend.parse_utc_timestamp(plan['start_time'])
+
+        def post(identifier, created_at):
+            return {
+                'id': identifier,
+                'author_id': 'author-1',
+                'created_at': created_at,
+                'text': 'Time-bound result',
+                'lang': 'en',
+                'public_metrics': {},
+            }
+
+        fetch_page.return_value = {
+            'data': [
+                post('before', (window_start - timedelta(seconds=1)).isoformat()),
+                post('boundary', window_start.isoformat()),
+                post('inside', (window_start + timedelta(minutes=1)).isoformat()),
+                post('missing', None),
+            ],
+            'includes': {'users': []},
+            'meta': {},
+        }
+        result = backend.x_search({}, 'test-token', plan)
+
+        self.assertEqual([post['id'] for post in result['data']], ['inside', 'boundary'])
+        self.assertEqual(result['meta']['dropped_before_start_time'], 2)
 
 
 

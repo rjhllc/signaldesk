@@ -12,9 +12,11 @@ const SORT_LABELS = {
 };
 const INLINE_EXCLUDE_RE = /\/\s*exclude\s+brand\s+posts\s+@?([A-Za-z0-9_]{1,15})\b/i;
 const LOOKBACK_HELP = {
-  '1d': 'Recent search · within X’s 7-day window.',
-  '1wk': 'Recent search · X limits this endpoint to 7 days.',
-  '1m': 'Full archive · X pay-per-use or Enterprise access required.',
+  '15m': 'Results are restricted to the last 15 minutes.',
+  '1h': 'Results are restricted to the last hour.',
+  '4h': 'Results are restricted to the last 4 hours.',
+  '12h': 'Results are restricted to the last 12 hours.',
+  '1d': 'Results are restricted to the last day.',
 };
 const FILTER_DEFAULTS = {
   links: 'any', media: 'any', language: '', verified: 'any', promotional: 'include',
@@ -655,7 +657,7 @@ function resetSignalDesk() {
   llmController = null;
   previewSequence += 1;
   elements.query.value = '';
-  elements.lookback.value = '1wk';
+  elements.lookback.value = '1h';
   updateLookbackHelp();
   elements.limit.value = '50';
   elements.retrievalOrder.value = 'recency';

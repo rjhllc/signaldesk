@@ -45,11 +45,13 @@
           <label class="control lookback-control">
             <span>Time range</span>
             <select id="lookback" aria-describedby="lookback-help">
-              <option value="1d">Last 24 hours</option>
-              <option value="1wk" selected>Last 7 days</option>
-              <option value="1m">Last 30 days · paid X access</option>
+              <option value="15m">15 minutes</option>
+              <option value="1h" selected>1 hour</option>
+              <option value="4h">4 hours</option>
+              <option value="12h">12 hours</option>
+              <option value="1d">1 day</option>
             </select>
-            <small id="lookback-help">Recent search · X limits this endpoint to 7 days.</small>
+            <small id="lookback-help">Results are restricted to the last hour.</small>
           </label>
           <label class="control"><span>Number of posts</span><select id="limit"><option value="25">Up to 25</option><option value="50" selected>Up to 50</option><option value="75">Up to 75</option><option value="100">Up to 100</option></select></label>
           <label class="control"><span>Find posts by</span><select id="retrieval-order"><option value="recency" selected>Most recent</option><option value="relevancy">Most relevant</option></select></label>

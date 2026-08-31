@@ -123,6 +123,10 @@ async def x_search(payload, token, plan=None):
     dropped_excluded_terms = 0
     pagination_token = None
     next_token = None
+    window_start = core.parse_utc_timestamp(plan['start_time'])
+    if window_start is None:
+        raise ValueError('Search plan has an invalid start time')
+    dropped_before_start_time = 0
 
     for _ in range(core.MAX_API_PAGES):
         remaining = plan['limit'] - len(accepted)
@@ -142,6 +146,10 @@ async def x_search(payload, token, plan=None):
                 duplicates_dropped += 1
                 continue
             seen_ids.add(post_id)
+            created_at = core.parse_utc_timestamp(post.get('created_at'))
+            if created_at is None or created_at < window_start:
+                dropped_before_start_time += 1
+                continue
             if core.contains_excluded_term(post.get('text'), plan['excluded_terms']):
                 dropped_excluded_terms += 1
                 continue
@@ -175,6 +183,7 @@ async def x_search(payload, token, plan=None):
         'dropped_unselected_types': dropped_unselected_types,
         'duplicates_dropped': duplicates_dropped,
         'dropped_excluded_terms': dropped_excluded_terms,
+        'dropped_before_start_time': dropped_before_start_time,
         'more_available': bool(next_token),
         'partial': len(displayed_posts) < plan['limit'],
         'sort_scope': (
@@ -501,7 +510,7 @@ class Default(WorkerEntrypoint):
             body = {
                 'ok': False,
                 'build': core.BUILD_VERSION,
-                'error': core.x_api_error_message(error, plan),
+                'error': core.x_api_error_message(error),
                 'x_status': error.status,
             }
             if plan:
