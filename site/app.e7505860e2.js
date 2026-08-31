@@ -48,11 +48,10 @@ let targetY = 0;
 
 function drawMagneticField() {
   if (!magneticField || !fieldContext) return;
-  const spacing = fieldWidth < 640 ? 22 : 25;
+  const spacing = fieldWidth < 640 ? 24 : 28;
   const reach = Math.hypot(fieldWidth, fieldHeight) * 1.15;
   fieldContext.clearRect(0, 0, fieldWidth, fieldHeight);
   fieldContext.lineCap = 'round';
-  fieldContext.lineWidth = 1;
 
   for (let y = spacing / 2; y < fieldHeight; y += spacing) {
     for (let x = spacing / 2; x < fieldWidth; x += spacing) {
@@ -61,17 +60,30 @@ function drawMagneticField() {
       const distance = Math.hypot(dx, dy);
       const proximity = Math.max(0, 1 - distance / reach);
       const influence = pointerActive ? 0.08 + proximity ** 1.7 * 0.92 : 0;
-      const restAngle = Math.sin(x * .021 + y * .017) * .45 - Math.PI / 2;
-      const angle = influence > .001 ? Math.atan2(dy, dx) : restAngle;
-      const length = 3 + influence * 18;
-      const pull = influence * 6;
-      const startX = x + Math.cos(angle) * pull;
-      const startY = y + Math.sin(angle) * pull;
-      fieldContext.strokeStyle = `rgba(255, 255, 255, ${(0.18 + influence * 0.62).toFixed(3)})`;
+      const depth = 0.78 + (Math.sin(x * 0.019 + y * 0.023) + 1) * 0.12;
+      const angle = pointerActive ? Math.atan2(dy, dx) : 0;
+      const stretch = pointerActive ? (0.45 + influence * 4.4) * depth : 0;
+      const directionX = Math.cos(angle);
+      const directionY = Math.sin(angle);
+      const headX = x + directionX * stretch * 0.35;
+      const headY = y + directionY * stretch * 0.35;
+
+      if (pointerActive) {
+        const tailX = x - directionX * stretch * 0.65;
+        const tailY = y - directionY * stretch * 0.65;
+        fieldContext.lineWidth = 0.7 + depth * 0.35;
+        fieldContext.strokeStyle = `rgba(255, 255, 255, ${(0.06 + influence * 0.2).toFixed(3)})`;
+        fieldContext.beginPath();
+        fieldContext.moveTo(tailX, tailY);
+        fieldContext.lineTo(headX, headY);
+        fieldContext.stroke();
+      }
+
+      const dotRadius = 0.62 + depth * 0.22 + influence * 0.16;
+      fieldContext.fillStyle = `rgba(255, 255, 255, ${(0.16 + depth * 0.08 + influence * 0.25).toFixed(3)})`;
       fieldContext.beginPath();
-      fieldContext.moveTo(startX, startY);
-      fieldContext.lineTo(startX + Math.cos(angle) * length, startY + Math.sin(angle) * length);
-      fieldContext.stroke();
+      fieldContext.arc(headX, headY, dotRadius, 0, Math.PI * 2);
+      fieldContext.fill();
     }
   }
 }
