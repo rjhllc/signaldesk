@@ -73,7 +73,7 @@ function drawMagneticField() {
       const tailY = centerY - directionY * halfLength;
       const headX = x + directionX * halfLength;
       const headY = centerY + directionY * halfLength;
-      const opacity = 0.19 + depth * 0.09;
+      const opacity = 0.19 + depth * 0.09 + wave * 0.28;
 
       fieldContext.lineWidth = 1.22 + depth * 0.24 + wave * 0.22;
       if (pointerActive) {
