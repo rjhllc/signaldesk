@@ -49,7 +49,7 @@ let targetY = 0;
 function drawMagneticField() {
   if (!magneticField || !fieldContext) return;
   const spacing = fieldWidth < 640 ? 22 : 25;
-  const radius = fieldWidth < 640 ? 130 : 190;
+  const reach = Math.hypot(fieldWidth, fieldHeight) * 1.15;
   fieldContext.clearRect(0, 0, fieldWidth, fieldHeight);
   fieldContext.lineCap = 'round';
   fieldContext.lineWidth = 1;
@@ -59,7 +59,8 @@ function drawMagneticField() {
       const dx = pointerX - x;
       const dy = pointerY - y;
       const distance = Math.hypot(dx, dy);
-      const influence = pointerActive ? Math.max(0, 1 - distance / radius) ** 2 : 0;
+      const proximity = Math.max(0, 1 - distance / reach);
+      const influence = pointerActive ? 0.08 + proximity ** 1.7 * 0.92 : 0;
       const restAngle = Math.sin(x * .021 + y * .017) * .45 - Math.PI / 2;
       const angle = influence > .001 ? Math.atan2(dy, dx) : restAngle;
       const length = 3 + influence * 18;
@@ -90,6 +91,24 @@ function animateMagneticField() {
 function queueMagneticField() {
   if (!fieldFrame) fieldFrame = window.requestAnimationFrame(animateMagneticField);
 }
+function trackMagneticPointer(event) {
+  if (event.isPrimary === false) return;
+  targetX = event.clientX;
+  targetY = event.clientY;
+  if (!pointerActive) {
+    pointerX = targetX;
+    pointerY = targetY;
+  }
+  pointerActive = true;
+  queueMagneticField();
+}
+
+function releaseTouchPointer(event) {
+  if (event.pointerType !== 'touch') return;
+  pointerActive = false;
+  drawMagneticField();
+}
+
 
 function resizeMagneticField() {
   if (!magneticField || !fieldContext) return;
@@ -106,16 +125,10 @@ if (magneticField && fieldContext) {
   resizeMagneticField();
   window.addEventListener('resize', resizeMagneticField, { passive: true });
   if (!reducedMotion) {
-    window.addEventListener('pointermove', (event) => {
-      targetX = event.clientX;
-      targetY = event.clientY;
-      if (!pointerActive) {
-        pointerX = targetX;
-        pointerY = targetY;
-      }
-      pointerActive = true;
-      queueMagneticField();
-    }, { passive: true });
+    window.addEventListener('pointerdown', trackMagneticPointer, { passive: true });
+    window.addEventListener('pointermove', trackMagneticPointer, { passive: true });
+    window.addEventListener('pointerup', releaseTouchPointer, { passive: true });
+    window.addEventListener('pointercancel', releaseTouchPointer, { passive: true });
     document.documentElement.addEventListener('mouseleave', () => {
       pointerActive = false;
       drawMagneticField();
