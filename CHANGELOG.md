@@ -13,6 +13,7 @@ All notable changes to SignalDesk are documented here.
 - Simplified the marketing message to “filter the slop” with a direct description of clarified and curated X searches and filters.
 - Replaced the liquid-glass, desaturated hero overlay and static dot grid with a clean full-color hero and a viewport-wide magnetic particle field: dots brighten near the pointer, stretch symmetrically with distance, fade to black at their rear edge, and rise in a pronounced local wave beneath mouse or touch input.
 - Centered the hero at every viewport size, locked mobile to a non-scrolling viewport, and restored GitHub navigation with opaque mobile button backgrounds.
+- Optimized the magnetic renderer with precomputed particle geometry, batched fade strokes, a capped device-pixel ratio, one render per pointer frame, and an active centered state on first load.
 
 ### Fixed
 
