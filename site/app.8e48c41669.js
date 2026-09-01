@@ -41,9 +41,8 @@ const ringClearance = document.querySelector('.ring-clearance');
 const ringSvg = ringClearance?.ownerSVGElement;
 const gradientRing = document.querySelector('.gradient-ring circle');
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-const FRAME_INTERVAL = 1000 / 30;
-const INPUT_SPEED = 7;
-const OUTPUT_SPEED = 12;
+const FLOW_SPEED = 10;
+const PARTICLE_OPACITY = 0.42;
 const OUTPUT_COUNT = 5;
 let fieldWidth = 0;
 let fieldHeight = 0;
@@ -51,7 +50,6 @@ let fieldScale = 1;
 let particleSpacing = 32;
 let inputLayer = null;
 let animationStart = null;
-let previousFrame = -Infinity;
 let ringCenterX = 0;
 let ringCenterY = 0;
 let ringPaintedRadius = 0;
@@ -90,12 +88,12 @@ function buildInputLayer() {
   }
   context.lineCap = 'round';
   context.lineWidth = 1.44;
-  context.strokeStyle = 'rgba(255, 255, 255, 0.27)';
+  context.strokeStyle = `rgba(255, 255, 255, ${PARTICLE_OPACITY})`;
   context.stroke();
 }
 
 function drawInputFlow(elapsed) {
-  const drift = reducedMotion ? 0 : (elapsed * INPUT_SPEED / 1000) % particleSpacing;
+  const drift = reducedMotion ? 0 : (elapsed * FLOW_SPEED / 1000) % particleSpacing;
   inputContext.setTransform(1, 0, 0, 1, 0, 0);
   inputContext.clearRect(0, 0, inputField.width, inputField.height);
   inputContext.drawImage(inputLayer, (drift - particleSpacing) * fieldScale, 0);
@@ -119,11 +117,11 @@ function drawOutputFlow(elapsed) {
   const outputEndX = fieldWidth - 20;
   const trackLength = outputEndX - outputStartX;
   if (trackLength <= 0) return;
-  const phase = reducedMotion ? 0 : (elapsed * OUTPUT_SPEED / 1000) % trackLength;
+  const phase = reducedMotion ? 0 : (elapsed * FLOW_SPEED / 1000) % trackLength;
   const spacing = trackLength / OUTPUT_COUNT;
   outputContext.lineCap = 'round';
   outputContext.lineWidth = 1.44;
-  outputContext.strokeStyle = 'rgba(255, 255, 255, 0.62)';
+  outputContext.strokeStyle = `rgba(255, 255, 255, ${PARTICLE_OPACITY})`;
   outputContext.beginPath();
   for (let index = 0; index < OUTPUT_COUNT; index += 1) {
     const x = outputStartX + (phase + index * spacing) % trackLength;
@@ -141,10 +139,7 @@ function drawFilterFlow(elapsed) {
 
 function renderFilterFrame(timestamp) {
   if (animationStart === null) animationStart = timestamp;
-  if (timestamp - previousFrame >= FRAME_INTERVAL) {
-    drawFilterFlow(timestamp - animationStart);
-    previousFrame = timestamp;
-  }
+  drawFilterFlow(timestamp - animationStart);
   window.requestAnimationFrame(renderFilterFrame);
 }
 
