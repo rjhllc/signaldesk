@@ -22,6 +22,7 @@ All notable changes to SignalDesk are documented here.
 - Disabled continuous particle and ring animation when reduced motion is requested.
 - Refined headline weight, character spacing, and word spacing; increased desktop separation from the light ring and introduced a balanced two-line mobile headline with a constrained description.
 - Updated the GitHub repository About link from the retired release page to `https://signaldesk.run`.
+- Replaced the GitHub README banner with the current black particle conveyor, full-color light ring, five-dot output, and “filter the slop” copy.
 
 ### Fixed
 
