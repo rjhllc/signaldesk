@@ -8,7 +8,7 @@
 /assets/*
   Cache-Control: public, max-age=86400
 
-/styles.3a73c88271.css
+/styles.9fe3721fa0.css
   Cache-Control: public, max-age=31536000, immutable
 
 /app.ab1760999a.js

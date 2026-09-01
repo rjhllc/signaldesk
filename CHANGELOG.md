@@ -14,6 +14,7 @@ All notable changes to SignalDesk are documented here.
 - Replaced the liquid-glass, desaturated hero overlay and static dot grid with a steady particle conveyor: the dense input field moves right into the filter while a five-dot curated stream exits at the same speed on the black side and pulses with a soft glow for visibility.
 - Kept the light wheel’s interior and clearance band fully opaque, and erased input pixels at the same circular boundary so particles cannot appear beneath the filter.
 - Centered the hero at every viewport size, locked mobile to a non-scrolling viewport, and restored GitHub navigation with opaque mobile button backgrounds.
+- Increased separation between the hero copy and light ring, including a balanced two-line mobile headline and constrained mobile description.
 - Optimized the particle conveyor by pre-rendering its dense input field once, moving a cached bitmap at the display’s native refresh rate, capping device-pixel ratio at 1.5, and disabling continuous animation when reduced motion is requested.
 
 ### Fixed
