@@ -43,6 +43,7 @@ const gradientRing = document.querySelector('.gradient-ring circle');
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const FLOW_SPEED = 10;
 const PARTICLE_OPACITY = 0.42;
+const OUTPUT_PULSE_DURATION = 1800;
 const OUTPUT_COUNT = 5;
 let fieldWidth = 0;
 let fieldHeight = 0;
@@ -118,16 +119,26 @@ function drawOutputFlow(elapsed) {
   const trackLength = outputEndX - outputStartX;
   if (trackLength <= 0) return;
   const phase = reducedMotion ? 0 : (elapsed * FLOW_SPEED / 1000) % trackLength;
+  const pulse = reducedMotion
+    ? 0.5
+    : 0.5 - Math.cos(elapsed * Math.PI * 2 / OUTPUT_PULSE_DURATION) * 0.5;
   const spacing = trackLength / OUTPUT_COUNT;
   outputContext.lineCap = 'round';
-  outputContext.lineWidth = 1.44;
-  outputContext.strokeStyle = `rgba(255, 255, 255, ${PARTICLE_OPACITY})`;
   outputContext.beginPath();
   for (let index = 0; index < OUTPUT_COUNT; index += 1) {
     const x = outputStartX + (phase + index * spacing) % trackLength;
     outputContext.moveTo(x, fieldHeight / 2);
     outputContext.lineTo(x + 0.01, fieldHeight / 2);
   }
+  outputContext.lineWidth = 2.2 + pulse * 0.8;
+  outputContext.strokeStyle = `rgba(255, 255, 255, ${0.2 + pulse * 0.3})`;
+  outputContext.shadowColor = `rgba(255, 255, 255, ${0.55 + pulse * 0.35})`;
+  outputContext.shadowBlur = 5 + pulse * 8;
+  outputContext.stroke();
+  outputContext.lineWidth = 1.44;
+  outputContext.strokeStyle = `rgba(255, 255, 255, ${PARTICLE_OPACITY + pulse * 0.35})`;
+  outputContext.shadowColor = 'transparent';
+  outputContext.shadowBlur = 0;
   outputContext.stroke();
 }
 
